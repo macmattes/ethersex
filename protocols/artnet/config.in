@@ -7,8 +7,13 @@ fi
 dep_bool_menu "Art-Net Node" ARTNET_SUPPORT $NET_MAX_FRAME_LENGTH_GT_571 $DMX_STORAGE_SUPPORT $UDP_SUPPORT
   int "UDP Port" CONF_ARTNET_PORT 6454
   comment "Universe Settings"
-  int "Input Universe" CONF_ARTNET_INUNIVERSE "1"
-  int "Output Universe" CONF_ARTNET_OUTUNIVERSE "0"
+  comment "Input"
+  int "Artnet Input Universe" CONF_ARTNET_INUNIVERSE "1"
+  int "map to DMX Storage Universe" CONF_ARTNET_DMXINUNIVERSE "1"
+  comment "------------------------------------------------------"
+  comment "Output"
+  int "Artnet Output Universe" CONF_ARTNET_OUTUNIVERSE "0"
+  int "map to DMX Storage Universe" CONF_ARTNET_DMXOUTUNIVERSE "0"
   comment  "Debugging Flags"
   dep_bool 'ARTNET' DEBUG_ARTNET $DEBUG
 endmenu
