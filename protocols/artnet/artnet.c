@@ -200,8 +200,8 @@ artnet_sendPollReply(void)
   if (artnet_dmxTransmitting == TRUE)
     msg->goodOutput[0] |= (1 << 7);
 
-  msg->swin[0] = (artnet_subNet & 15) * 16 | (artnet_dmxinputUniverse & 15);
-  msg->swout[0] = (artnet_subNet & 15) * 16 | (artnet_dmxoutputUniverse & 15);
+  msg->swin[0] = (artnet_subNet & 15) * 16 | (artnet_inputUniverse & 15);
+  msg->swout[0] = (artnet_subNet & 15) * 16 | (artnet_outputUniverse & 15);
   msg->style = STYLE_NODE;
 
   memcpy(msg->mac, uip_ethaddr.addr, 6);
