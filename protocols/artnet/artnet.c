@@ -51,6 +51,8 @@
 uint8_t artnet_subNet = SUBNET_DEFAULT;
 uint8_t artnet_outputUniverse;
 uint8_t artnet_inputUniverse;
+uint8_t artnet_dmxoutputUniverse;
+uint8_t artnet_dmxinputUniverse;
 uint8_t artnet_sendPollReplyOnChange = TRUE;
 uip_ipaddr_t artnet_pollReplyTarget;
 uint32_t artnet_pollReplyCounter = 0;
@@ -97,13 +99,15 @@ artnet_init(void)
   artnet_subNet = SUBNET_DEFAULT;
   artnet_inputUniverse = CONF_ARTNET_INUNIVERSE;
   artnet_outputUniverse = CONF_ARTNET_OUTUNIVERSE;
+  artnet_dmxinputUniverse = CONF_ARTNET_DMXINUNIVERSE;
+  artnet_dmxoutputUniverse = CONF_ARTNET_DMXOUTUNIVERSE;
   strcpy_P(artnet_shortName, PSTR("e6ArtNode"));
   strcpy_P(artnet_longName, PSTR("e6ArtNode hostname: " CONF_HOSTNAME));
 
   uip_ipaddr_copy(artnet_pollReplyTarget,all_ones_addr);
   
   /* dmx storage connection */
-  artnet_conn_id = dmx_storage_connect(artnet_inputUniverse);
+  artnet_conn_id = dmx_storage_connect(artnet_dmxinputUniverse);
   if (artnet_conn_id != -1)
   {
     artnet_connected = TRUE;
@@ -196,8 +200,8 @@ artnet_sendPollReply(void)
   if (artnet_dmxTransmitting == TRUE)
     msg->goodOutput[0] |= (1 << 7);
 
-  msg->swin[0] = (artnet_subNet & 15) * 16 | (artnet_inputUniverse & 15);
-  msg->swout[0] = (artnet_subNet & 15) * 16 | (artnet_outputUniverse & 15);
+  msg->swin[0] = (artnet_subNet & 15) * 16 | (artnet_dmxinputUniverse & 15);
+  msg->swout[0] = (artnet_subNet & 15) * 16 | (artnet_dmxoutputUniverse & 15);
   msg->style = STYLE_NODE;
 
   memcpy(msg->mac, uip_ethaddr.addr, 6);
@@ -234,7 +238,7 @@ artnet_sendDmxPacket(void)
   msg->lengthHi = HI8(DMX_STORAGE_CHANNELS);
   msg->length = LO8(DMX_STORAGE_CHANNELS);
   for (uint8_t i = 0; i < DMX_STORAGE_CHANNELS; i++)
-	msg->dataStart[i] = get_dmx_channel_slot(artnet_inputUniverse, i, artnet_conn_id);
+	msg->dataStart[i] = get_dmx_channel_slot(artnet_dmxinputUniverse, i, artnet_conn_id);
   /* broadcast the packet */
   artnet_send(sizeof(struct artnet_dmx) + DMX_STORAGE_CHANNELS);
 }
@@ -267,7 +271,7 @@ processPollPacket(struct artnet_poll *poll)
 void
 artnet_main(void)
 {
-  if (get_dmx_slot_state(artnet_inputUniverse, artnet_conn_id) ==
+  if (get_dmx_slot_state(artnet_dmxinputUniverse, artnet_conn_id) ==
       DMX_NEWVALUES && artnet_connected == TRUE)
   {
     ARTNET_DEBUG("Universe has changed, sending artnet data!\r\n");
@@ -316,7 +320,7 @@ artnet_get(void)
         if (artnet_dmxDirection == 0)
         {
           uint16_t len = ((dmx->lengthHi << 8) + dmx->length);
-          set_dmx_channels(&dmx->dataStart, artnet_outputUniverse, 0, len);
+          set_dmx_channels(&dmx->dataStart, artnet_dmxoutputUniverse, 0, len);
           if (artnet_sendPollReplyOnChange == TRUE)
           {
             artnet_pollReplyCounter++;
