@@ -8,11 +8,14 @@ dep_bool_menu "Art-Net Node" ARTNET_SUPPORT $NET_MAX_FRAME_LENGTH_GT_571 $DMX_ST
   int "UDP Port" CONF_ARTNET_PORT 6454
   comment "Universe Settings"
   comment "Input"
-  int "Artnet Input Universe" CONF_ARTNET_INUNIVERSE "1"
-  int "map to DMX Storage Universe" CONF_ARTNET_DMXINUNIVERSE "1"
+  dep_bool 'USE ARTNET INPUT' ARTNET_INPUT_SUPPORT "y"
+  if [ "$ARTNET_INPUT_SUPPORT" = "y" ]; then
+    int "Artnet Send Universe" CONF_ARTNET_INUNIVERSE "1"
+    int "map to DMX Storage Universe" CONF_ARTNET_DMXINUNIVERSE "1"
+  fi
   comment "------------------------------------------------------"
   comment "Output"
-  int "Artnet Output Universe" CONF_ARTNET_OUTUNIVERSE "0"
+  int "Artnet Receive Universe" CONF_ARTNET_OUTUNIVERSE "0"
   int "map to DMX Storage Universe" CONF_ARTNET_DMXOUTUNIVERSE "0"
   comment  "Debugging Flags"
   dep_bool 'ARTNET' DEBUG_ARTNET $DEBUG
