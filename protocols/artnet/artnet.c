@@ -97,15 +97,18 @@ artnet_init(void)
 
   /* read subnet */
   artnet_subNet = SUBNET_DEFAULT;
+#ifdef ARTNET_INPUT_SUPPORT
   artnet_inputUniverse = CONF_ARTNET_INUNIVERSE;
-  artnet_outputUniverse = CONF_ARTNET_OUTUNIVERSE;
   artnet_dmxinputUniverse = CONF_ARTNET_DMXINUNIVERSE;
+#endif /* ARTNET_INPUT_SUPPORT */
+  artnet_outputUniverse = CONF_ARTNET_OUTUNIVERSE;
   artnet_dmxoutputUniverse = CONF_ARTNET_DMXOUTUNIVERSE;
   strcpy_P(artnet_shortName, PSTR("e6ArtNode"));
   strcpy_P(artnet_longName, PSTR("e6ArtNode hostname: " CONF_HOSTNAME));
 
   uip_ipaddr_copy(artnet_pollReplyTarget,all_ones_addr);
-  
+
+#ifdef ARTNET_INPUT_SUPPORT
   /* dmx storage connection */
   artnet_conn_id = dmx_storage_connect(artnet_dmxinputUniverse);
   if (artnet_conn_id != -1)
@@ -119,6 +122,7 @@ artnet_init(void)
     artnet_connected = FALSE;
     ARTNET_DEBUG("Connection to dmx-storage couldn't be established!\r\n");
   }
+#endif /* ARTNET_INPUT_SUPPORT */
 
   /* net_init */
   artnet_netInit();
@@ -199,8 +203,9 @@ artnet_sendPollReply(void)
   msg->goodOutput[0] = (1 << 1);
   if (artnet_dmxTransmitting == TRUE)
     msg->goodOutput[0] |= (1 << 7);
-
+#ifdef ARTNET_INPUT_SUPPORT
   msg->swin[0] = (artnet_subNet & 15) * 16 | (artnet_inputUniverse & 15);
+#endif /* ARTNET_INPUT_SUPPORT */
   msg->swout[0] = (artnet_subNet & 15) * 16 | (artnet_outputUniverse & 15);
   msg->style = STYLE_NODE;
 
@@ -210,6 +215,8 @@ artnet_sendPollReply(void)
   artnet_send(sizeof(struct artnet_pollreply));
 }
 
+
+#ifdef ARTNET_INPUT_SUPPORT
 /* ----------------------------------------------------------------------------
  * send an ArtDmx packet
  */
@@ -267,18 +274,20 @@ processPollPacket(struct artnet_poll *poll)
   if (artnet_sendPollReplyOnChange)
 	  artnet_sendDmxPacket();
 }
+#endif /* ARTNET_INPUT_SUPPORT */
 
 void
 artnet_main(void)
 {
+#ifdef ARTNET_INPUT_SUPPORT
   if (get_dmx_slot_state(artnet_dmxinputUniverse, artnet_conn_id) ==
       DMX_NEWVALUES && artnet_connected == TRUE)
   {
     ARTNET_DEBUG("Universe has changed, sending artnet data!\r\n");
     artnet_sendDmxPacket();
   }
+#endif /* ARTNET_INPUT_SUPPORT */
 }
-
 
 /* ----------------------------------------------------------------------------
  * receive Art-Net packet
