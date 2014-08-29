@@ -44,6 +44,7 @@
 #define _SPI2X0 SPI2X
 #define _EIMSK EIMSK
 #define _IVREG MCUCR
+#define _EICRA EICRA
 
 /* Watchdog status register */
 #define MCU_STATUS_REGISTER  MCUSR
@@ -89,7 +90,7 @@
 
 #define TC1_MODE_OFF	     {TCCR1A&=~(_BV(WGM11)|_BV(WGM10));TCCR1B&=~(_BV(WGM12));}
 #define TC1_MODE_PWM         {TCCR1A&=~(_BV(WGM11));TCCR1A|=_BV(WGM10);TCCR1B&=~(_BV(WGM12));}
-#define TC1_MODE_CTC         {TCCR1A&=~(_BV(WGM10));TCCR1A|=_BV(WGM11);TCCR1B&=~(_BV(WGM12));}
+#define TC1_MODE_CTC         {TCCR1A&=~(_BV(WGM10)|_BV(WGM11));TCCR1B|=_BV(WGM12);}
 #define TC1_MODE_PWMFAST     {TCCR1A|=_BV(WGM11)|_BV(WGM10);TCCR1B&=~(_BV(WGM12));}
 
 #define TC1_OUTPUT_COMPARE_NONE   {TCCR1A&=~(_BV(COM1A1)|_BV(COM1A0));}
