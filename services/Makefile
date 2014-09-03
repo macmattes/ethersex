@@ -14,6 +14,7 @@ SUBSUBDIRS += services/motd
 SUBSUBDIRS += services/moodlight
 SUBSUBDIRS += services/stella
 SUBSUBDIRS += services/starburst
+SUBSUBDIRS += services/ws2801
 SUBSUBDIRS += services/tanklevel
 SUBSUBDIRS += services/tftp
 SUBSUBDIRS += services/upnp
