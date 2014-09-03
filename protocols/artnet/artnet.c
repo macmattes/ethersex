@@ -351,7 +351,7 @@ artnet_get(void)
       break;
   }
 }
-
+#endif /* Artnet Support */
 /*
    -- Ethersex META --
    header(protocols/artnet/artnet.h)
