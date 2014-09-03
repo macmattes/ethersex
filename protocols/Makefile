@@ -18,6 +18,7 @@ SUBSUBDIRS += protocols/uip/ipchair
 SUBSUBDIRS += protocols/ustream
 SUBSUBDIRS += protocols/usb
 SUBSUBDIRS += protocols/yport
+SUBSUBDIRS += protocols/bsbport
 SUBSUBDIRS += protocols/zbus
 SUBSUBDIRS += protocols/dns
 SUBSUBDIRS += protocols/ecmd/
@@ -42,6 +43,7 @@ SUBSUBDIRS += protocols/cw
 SUBSUBDIRS += protocols/sgc
 SUBSUBDIRS += protocols/sip
 SUBSUBDIRS += protocols/mq135
+SUBSUBDIRS += protocols/radio/ask
 
 # generic fluff
 include $(TOPDIR)/scripts/rules.mk
