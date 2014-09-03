@@ -34,5 +34,6 @@ source protocols/udpIO/config.in
 source protocols/udpcurtain/config.in
 source protocols/cw/config.in
 source protocols/sgc/config.in
+source protocols/mq135/config.in
 endmenu
 
