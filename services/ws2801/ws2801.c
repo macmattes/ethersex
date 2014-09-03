@@ -100,7 +100,7 @@ ws2801_clear(void)
 	}
     ws2801_showPixel();
 }
-
+//mainloop(ws2801_main)//timer(20,ws2801_main())
 /*
    -- Ethersex META --
    header(services/ws2801/ws2801.h)
