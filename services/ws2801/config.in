@@ -1,0 +1,7 @@
+dep_bool_menu "WS2801: RGB LED Support" WS2801_SUPPORT $DMX_STORAGE_SUPPORT
+
+		int "Active Channels" WS2801_CHANNELS 170
+		int "DMX Storage Universe" WS2801_UNIVERSE 0
+		int "Offset in Universe" WS2801_OFFSET 0
+
+endmenu

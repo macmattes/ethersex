@@ -50,8 +50,8 @@
 
 uint8_t artnet_subNet = SUBNET_DEFAULT;
 uint8_t artnet_outputUniverse;
-uint8_t artnet_inputUniverse;
 uint8_t artnet_dmxoutputUniverse;
+uint8_t artnet_inputUniverse;
 uint8_t artnet_dmxinputUniverse;
 uint8_t artnet_sendPollReplyOnChange = TRUE;
 uip_ipaddr_t artnet_pollReplyTarget;
@@ -97,15 +97,20 @@ artnet_init(void)
 
   /* read subnet */
   artnet_subNet = SUBNET_DEFAULT;
+#ifdef ARTNET_INPUT_SUPPORT 
   artnet_inputUniverse = CONF_ARTNET_INUNIVERSE;
-  artnet_outputUniverse = CONF_ARTNET_OUTUNIVERSE;
   artnet_dmxinputUniverse = CONF_ARTNET_DMXINUNIVERSE;
+#endif
+#ifdef ARTNET_OUTPUT_SUPPORT 
+  artnet_outputUniverse = CONF_ARTNET_OUTUNIVERSE;
   artnet_dmxoutputUniverse = CONF_ARTNET_DMXOUTUNIVERSE;
+#endif
   strcpy_P(artnet_shortName, PSTR("e6ArtNode"));
   strcpy_P(artnet_longName, PSTR("e6ArtNode hostname: " CONF_HOSTNAME));
 
   uip_ipaddr_copy(artnet_pollReplyTarget,all_ones_addr);
-  
+
+#ifdef ARTNET_INPUT_SUPPORT  
   /* dmx storage connection */
   artnet_conn_id = dmx_storage_connect(artnet_dmxinputUniverse);
   if (artnet_conn_id != -1)
@@ -119,6 +124,7 @@ artnet_init(void)
     artnet_connected = FALSE;
     ARTNET_DEBUG("Connection to dmx-storage couldn't be established!\r\n");
   }
+#endif /* ARTNET_INPUT_SUPPORT */
 
   /* net_init */
   artnet_netInit();
@@ -199,9 +205,12 @@ artnet_sendPollReply(void)
   msg->goodOutput[0] = (1 << 1);
   if (artnet_dmxTransmitting == TRUE)
     msg->goodOutput[0] |= (1 << 7);
-
+#ifdef ARTNET_INPUT_SUPPORT
   msg->swin[0] = (artnet_subNet & 15) * 16 | (artnet_inputUniverse & 15);
+#endif
+#ifdef ARTNET_OUTPUT_SUPPORT 
   msg->swout[0] = (artnet_subNet & 15) * 16 | (artnet_outputUniverse & 15);
+#endif
   msg->style = STYLE_NODE;
 
   memcpy(msg->mac, uip_ethaddr.addr, 6);
@@ -237,8 +246,10 @@ artnet_sendDmxPacket(void)
   msg->universe = ((artnet_subNet << 4) | artnet_inputUniverse);
   msg->lengthHi = HI8(DMX_STORAGE_CHANNELS);
   msg->length = LO8(DMX_STORAGE_CHANNELS);
+#ifdef ARTNET_INPUT_SUPPORT 
   for (uint8_t i = 0; i < DMX_STORAGE_CHANNELS; i++)
-	msg->dataStart[i] = get_dmx_channel_slot(artnet_dmxinputUniverse, i, artnet_conn_id);
+	msg->dataStart[i] = get_dmx_channel_slot(artnet_inputUniverse, i, artnet_conn_id);
+#endif
   /* broadcast the packet */
   artnet_send(sizeof(struct artnet_dmx) + DMX_STORAGE_CHANNELS);
 }
@@ -271,12 +282,14 @@ processPollPacket(struct artnet_poll *poll)
 void
 artnet_main(void)
 {
+#ifdef ARTNET_INPUT_SUPPORT 
   if (get_dmx_slot_state(artnet_dmxinputUniverse, artnet_conn_id) ==
       DMX_NEWVALUES && artnet_connected == TRUE)
   {
     ARTNET_DEBUG("Universe has changed, sending artnet data!\r\n");
     artnet_sendDmxPacket();
   }
+#endif
 }
 
 
@@ -314,7 +327,7 @@ artnet_get(void)
 
       ARTNET_DEBUG("Received artnet output packet!\r\n");
       dmx = (struct artnet_dmx *) uip_appdata;
-
+#ifdef ARTNET_OUTPUT_SUPPORT 
       if (dmx->universe == ((artnet_subNet << 4) | artnet_outputUniverse))
       {
         if (artnet_dmxDirection == 0)
@@ -328,6 +341,7 @@ artnet_get(void)
           }
         }
       }
+#endif
       break;
     case OP_ADDRESS:;
     case OP_IPPROG:;

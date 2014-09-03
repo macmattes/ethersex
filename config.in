@@ -290,7 +290,6 @@ source protocols/udpcurtain/config.in
 source protocols/cw/config.in
 source protocols/sgc/config.in
 source protocols/mq135/config.in
-source protocols/ws2801/config.in
 endmenu
 
 ###############################################################################
@@ -325,6 +324,7 @@ source services/lome6/config.in
 source services/projectors/sanyoZ700/config.in
 source services/freqcount/config.in
 source services/tanklevel/config.in
+source services/ws2801/config.in
 endmenu
 
 ###############################################################################

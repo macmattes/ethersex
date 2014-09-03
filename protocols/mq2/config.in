@@ -1,0 +1,7 @@
+ dep_bool  "MQ2 Combustible Air Sensor Support" MQ2_SUPPORT $ADC_SUPPORT $ARCH_AVR
+    if [ "$MQ2_SUPPORT" = "y" ]; then
+	int "Analoginput for MQ2" MQ2_ADCPORT 5
+        int "default ppm of CH4 for calibration" MQ2_DEFAULTPPM 392
+        int "default Ro for MQ2_DEFAULTPPM ppm of CH2" MQ2_DEFAULTRO 41763
+        int "default BalanceResistor for Rs" MQ2_BALANCERESISTOR 20000
+    fi
