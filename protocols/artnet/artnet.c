@@ -219,8 +219,6 @@ artnet_sendPollReply(void)
   artnet_send(sizeof(struct artnet_pollreply));
 }
 
-
-#ifdef ARTNET_INPUT_SUPPORT
 /* ----------------------------------------------------------------------------
  * send an ArtDmx packet
  */
@@ -280,7 +278,7 @@ processPollPacket(struct artnet_poll *poll)
   if (artnet_sendPollReplyOnChange)
 	  artnet_sendDmxPacket();
 }
-#endif /* ARTNET_INPUT_SUPPORT */
+
 
 void
 artnet_main(void)
@@ -353,7 +351,6 @@ artnet_get(void)
       break;
   }
 }
-#endif /* ARTNET_SUPPORT */
 
 /*
    -- Ethersex META --
