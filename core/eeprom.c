@@ -123,6 +123,10 @@ eeprom_init (void)
   eeprom_save_char (kty_calibration, 0);
 #endif
 
+#ifdef MQ135_SUPPORT
+  eeprom_save_long (mq135_calibration, 0);
+#endif
+
 #ifdef STELLA_EEPROM
   uint8_t stella_temp[10] = { 0 };
   eeprom_save (stella_channel_values, stella_temp, 10);

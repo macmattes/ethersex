@@ -12,6 +12,7 @@ Please refer to LICENSE file for licensing information.
 #include "config.h"
 #include "core/bit-macros.h"
 #include "core/debug.h"
+#include "core/eeprom.h"
 #include "core/periodic.h"
 #include <util/delay.h>
 //#include "services/clock/clock.h"
@@ -24,9 +25,21 @@ Please refer to LICENSE file for licensing information.
 /* ----------------------------------------------------------------------------
  *global variables
  */
-long mq135_defaultro = MQ135_DEFAULTRO;
+long mq135_defaultro;
 double mq135_ppm=0;
 uint16_t mq135_adc=0;
+long mq135_ro = 0;
+
+/*
+ * init mq135
+ */
+void mq135_init(void) {
+   #ifdef MQ135_SUPPORT
+  	eeprom_restore_long(mq135_calibration, &mq135_defaultro);
+	if (mq135_defaultro == 0)
+		mq135_defaultro = MQ135_DEFAULTRO;
+   #endif
+}
 
 /*
  * get resistence for given voltage
@@ -55,10 +68,18 @@ double mq135_getppm(long resvalue, long ro) {
 	return ret;
 }
 
-void mq135_main(void) {
-	char printbuff[100];
-	long mq135_ro = 0;
+long 
+mq135_calibrate(void)
+{
+    eeprom_save_long(mq135_calibration, mq135_ro);
+    eeprom_update_chksum();
+    mq135_defaultro = mq135_ro;
+    return mq135_defaultro;
+}
 
+void 
+mq135_main(void) {
+	//char printbuff[100];
 		//get adc
 		mq135_adc = (3*mq135_adc+adc_get_voltage(MQ135_ADCPORT))/4;
 
@@ -68,25 +89,26 @@ void mq135_main(void) {
 		//convert to ppm (using default ro)
 		mq135_ppm = (3*mq135_ppm + mq135_getppm(res, mq135_defaultro))/4;
 
-		ltoa(mq135_adc, printbuff, 10);
-		debug_printf("ADC     : %s \n", printbuff);
+		//ltoa(mq135_adc, printbuff, 10);
+		//debug_printf("ADC     : %s \n", printbuff);
 
-		ltoa(res, printbuff, 10);
-		debug_printf("RES     : %s \n", printbuff);
+		//ltoa(res, printbuff, 10);
+		//debug_printf("RES     : %s \n", printbuff);
 
-		ltoa(mq135_ro, printbuff, 10);
-		debug_printf("ro     : %s \n", printbuff);
+		//ltoa(mq135_ro, printbuff, 10);
+		//debug_printf("ro     : %s \n", printbuff);
 
-		ltoa(mq135_defaultro, printbuff, 10);
-		debug_printf("defaultro     : %s \n", printbuff);
+		//ltoa(mq135_defaultro, printbuff, 10);
+		//debug_printf("defaultro     : %s \n", printbuff);
 
-		ltoa((int16_t)mq135_ppm, printbuff, 10);
-		debug_printf("ppm     : %s \n", printbuff);
+		//ltoa((int16_t)mq135_ppm, printbuff, 10);
+		//debug_printf("ppm     : %s \n", printbuff);
 
 }
 #endif
 
 /*
   -- Ethersex META --
+  init(mq135_init)
   timer(50, mq135_main())
 */

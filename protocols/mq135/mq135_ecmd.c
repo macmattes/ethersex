@@ -32,7 +32,7 @@
 
 #include "config.h"
 #include "mq135.h"
-
+//#include "core/eeprom.h"
 #include "protocols/ecmd/ecmd-base.h"
 
 
@@ -78,6 +78,12 @@ parse_cmd_mq135_res(char *cmd, char *output, uint16_t len)
 #endif
 }
 
+uint16_t parse_cmd_mq135_calibrate(char *cmd, char *output, uint16_t len)
+{
+    ltoa(mq135_calibrate(), output, 10);
+    return ECMD_FINAL(strlen(output));
+}
+
 
 uint16_t parse_cmd_mq135_defro(char *cmd, char *output, uint16_t len)
 {
@@ -100,5 +106,6 @@ uint16_t parse_cmd_mq135_defro(char *cmd, char *output, uint16_t len)
   ecmd_feature(mq135_ppm, "mq135 ppm",, get the ppm concentration)
   ecmd_feature(mq135_ro, "mq135 ro",, get the measured ro value)
   ecmd_feature(mq135_res, "mq135 res",, get the measured ro value)
+  ecmd_feature(mq135_calibrate, "mq135 calibrate",, run calibration of defaultro)
   ecmd_feature(mq135_defro, "mq135 defaultro",, get/set the default ro value)
 */

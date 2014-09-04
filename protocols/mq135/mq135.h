@@ -53,6 +53,7 @@ uint16_t mq135_adc;
 extern long mq135_getres(uint16_t adc);
 extern long mq135_getro(long resvalue, double ppm);
 extern double mq135_getppm(long resvalue, long ro);
+long mq135_calibrate(void);
 void mq135_main(void);
 
 #endif
