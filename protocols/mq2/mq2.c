@@ -12,6 +12,7 @@ Please refer to LICENSE file for licensing information.
 #include "config.h"
 #include "core/bit-macros.h"
 #include "core/debug.h"
+#include "core/eeprom.h"
 #include "core/periodic.h"
 #include <util/delay.h>
 //#include "services/clock/clock.h"
@@ -24,9 +25,22 @@ Please refer to LICENSE file for licensing information.
 /* ----------------------------------------------------------------------------
  *global variables
  */
-long mq2_defaultro = MQ2_DEFAULTRO;
+long mq2_defaultro;
 double mq2_ppm=0;
 uint16_t mq2_adc=0;
+long mq2_ro = 0;
+uint16_t mq2_avg=MQ2_SMOOTHING;
+
+/*
+ * init mq2
+ */
+void mq2_init(void) {
+   #ifdef MQ2_SUPPORT
+  	eeprom_restore_long(mq2_calibration, &mq2_defaultro);
+	if (mq2_defaultro == 0)
+		mq2_defaultro = MQ2_DEFAULTRO;
+   #endif
+}
 
 /*
  * get resistence for given voltage
@@ -55,38 +69,34 @@ double mq2_getppm(long resvalue, long ro) {
 	return ret;
 }
 
-void mq2_main(void) {
-	char printbuff[100];
-	long mq2_ro = 0;
+long 
+mq2_calibrate(void)
+{
+    eeprom_save_long(mq2_calibration, mq2_ro);
+    eeprom_update_chksum();
+    mq2_defaultro = mq2_ro;
+    return mq2_defaultro;
+}
 
-		//get adc
-		mq2_adc = (3*mq2_adc+adc_get_voltage(MQ2_ADCPORT))/4;
+void 
+mq2_main(void) {
+		//get adc average
+		mq2_adc = (mq2_avg*mq2_adc+adc_get_voltage(MQ2_ADCPORT))/(mq2_avg+1);
 
 		long res = mq2_getres(mq2_adc);
 		//get ro
 		mq2_ro = mq2_getro(res, MQ2_DEFAULTPPM);
-		//convert to ppm (using default ro)
-		mq2_ppm = (3*mq2_ppm + mq2_getppm(res, mq2_defaultro))/4;
-
-		ltoa(mq2_adc, printbuff, 10);
-		debug_printf("ADC     : %s \n", printbuff);
-
-		ltoa(res, printbuff, 10);
-		debug_printf("RES     : %s \n", printbuff);
-
-		ltoa(mq2_ro, printbuff, 10);
-		debug_printf("ro     : %s \n", printbuff);
-
-		ltoa(mq2_defaultro, printbuff, 10);
-		debug_printf("defaultro     : %s \n", printbuff);
-
-		ltoa((int16_t)mq2_ppm, printbuff, 10);
-		debug_printf("ppm     : %s \n", printbuff);
-
+		//convert to ppm (using defaultro) average
+		mq2_ppm = (mq2_avg*mq2_ppm + mq2_getppm(res, mq2_defaultro))/(mq2_avg+1);
+#ifdef MQ2_AUTOCALIBRATE
+	if (mq2_ppm < MQ2_DEFAULTPPM)
+		mq2_calibrate();
+#endif
 }
 #endif
 
 /*
   -- Ethersex META --
+  init(mq2_init)
   timer(50, mq2_main())
 */
