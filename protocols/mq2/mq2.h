@@ -15,9 +15,9 @@ Please refer to LICENSE file for licensing information.
 #define _MQ2_H_
 
 #ifdef MQ2_SUPPORT
-extern long mq2_defaultro;
-double mq2_ppm;
-uint16_t mq2_adc;
+double mq2_defaultro;
+long mq2_ppm;
+double mq2_adc;
 
 //define sensor resistance at 1000ppm of CH4 in the clean air
 //calibrate your sensor to obtain precise value
@@ -32,14 +32,15 @@ uint16_t mq2_adc;
 //look at the datasheet and use the helper to define those values
 #define MQ2_SCALINGFACTOR 3900 //CH4 gas value
 #define MQ2_EXPONENT -2.7 //CH4 gas value
-#define MQ2_MAXRSRO 3.000 //for CH4
+#define MQ2_MAXRSRO 3.000 //for CH4 3.000
 #define MQ2_MINRSRO 0.600 //for CH4
 
 //functions
-long mq2_getres(uint16_t adc);
-long mq2_getro(long resvalue, double ppm);
-double mq2_getppm(long resvalue, long ro);
+double mq2_getrs(double adc);
+double mq2_getro(double resvalue, double ppm);
+long double mq2_getppm(double resvalue, double ro);
 long mq2_calibrate(void);
+void mq2_calculation(void);
 void mq2_main(void);
 
 #endif
