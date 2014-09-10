@@ -39,7 +39,7 @@ parse_cmd_bh1750_lux(char *cmd, char *output, uint16_t len)
   sscanf_P(cmd, PSTR("%hhu"), &cadr);
   if (cadr < 7 || cadr > 127)
     return ECMD_ERR_PARSE_ERROR;
-  uint16_t val = i2c_bh1750_read_lux(cadr);
+  uint16_t val = i2c_bh1750_read(cadr);
 #ifdef ECMD_MIRROR_REQUEST
   return
     ECMD_FINAL(snprintf_P
@@ -56,7 +56,7 @@ parse_cmd_bh1750_raw(char *cmd, char *output, uint16_t len)
   sscanf_P(cmd, PSTR("%hhu"), &cadr);
   if (cadr < 7 || cadr > 127)
     return ECMD_ERR_PARSE_ERROR;
-  uint16_t val = i2c_bh1750_read_lux(cadr);
+  uint16_t val = i2c_bh1750_read(cadr);
 #ifdef ECMD_MIRROR_REQUEST
   return
     ECMD_FINAL(snprintf_P
