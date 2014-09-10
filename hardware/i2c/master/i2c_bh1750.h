@@ -28,6 +28,6 @@
 #define I2C_SLA_BH1750 0x23  // ADDR > 0.7 VCC)
 //#define I2C_SLA_BH1750  0x53 // ADDR < 0.3 VCC)
 
-int16_t i2c_bh1750_read_lux(uint8_t address);
+int16_t i2c_bh1750_read(uint8_t address);
 
 #endif /* _I2C_BH1750_H */
