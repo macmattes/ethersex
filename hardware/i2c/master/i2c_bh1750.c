@@ -39,22 +39,25 @@
 #define DEBUGGI2C(fnc, msg...)
 #endif
 
-#define PowerDown    0x00
-#define PowerOn      0x01
-#define Reset        0x07
-#define ContinuHigh  0x10
-#define ContinuLow   0x13
-#define OneTimeHigh  0x20
-#define OneTimeLow   0x23
+#define PowerDown    0x00 //no active state
+#define PowerOn      0x01 //waiting for measurement command
+#define Reset        0x07 //Reset Data register value. Reset command is not acceptable in power down mode.
+#define ContinuHigh  0x10 //Start measurment at 1lx resolution. Measurement Time is typically 120ms.
+#define ContinuHigh2 0x11 //Start measurment at 0.5lx resolution. Measurement Time is typically 120ms.
+#define ContinuLow   0x13 //Start measurment at 4lx resolution. Measurement Time is typically 16ms.
+#define OneTimeHigh  0x20 //Start measurment at 1lx resolution. Measurement Time is typically 120ms. It is automatically set to Power Down after measurement.
+#define OneTimeHigh2 0x21 //Start measurment at 0.5lx resolution. Measurement Time is typically 120ms. It is automatically set to Power Down after measurement.
+#define OneTimeLow   0x23 //Start measurment at 4lx resolution. Measurement Time is typically 16ms. It is automatically set to Power Down after measurement.
 
 #ifdef I2C_BH1750_SUPPORT
 
+uint8_t chipmode = 0x10;
+
 int16_t
-i2c_bh1750_read_lux(const uint8_t chipaddress)
+i2c_bh1750_read(const uint8_t chipaddress)
 {
   uint8_t data[2];
   uint16_t ret = 0xffff;
-  uint8_t chipmode = 0x10;
 
   /*select slave in write mode */
   if (!i2c_master_select(chipaddress, TW_WRITE))
