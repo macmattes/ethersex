@@ -106,6 +106,10 @@ struct eeprom_config_t
   int8_t kty_calibration;
 #endif
 
+#ifdef MQ2_SUPPORT
+  long mq2_calibration;
+#endif
+
 #ifdef MQ135_SUPPORT
   long mq135_calibration;
 #endif

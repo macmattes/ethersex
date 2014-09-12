@@ -123,6 +123,10 @@ eeprom_init (void)
   eeprom_save_char (kty_calibration, 0);
 #endif
 
+#ifdef MQ2_SUPPORT
+  eeprom_save_long (mq2_calibration, 0);
+#endif
+
 #ifdef MQ135_SUPPORT
   eeprom_save_long (mq135_calibration, 0);
 #endif
