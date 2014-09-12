@@ -32,31 +32,26 @@
 
 #include "config.h"
 #include "mq135.h"
-//#include "core/eeprom.h"
 #include "protocols/ecmd/ecmd-base.h"
 
 
 int16_t
 parse_cmd_mq135_ppm(char *cmd, char *output, uint16_t len)
 {
-  int16_t ret = (int16_t)mq135_ppm;
-  if (ret == 0)
-    return
-      ECMD_FINAL(snprintf_P(output, len, PSTR("error reading from sensor")));
-#ifdef ECMD_MIRROR_REQUEST
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("mq135 ppm %d"), ret));
-#else
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), ret));
-#endif
+    ltoa(mq135_ppm, output, 10);
+    return ECMD_FINAL(strlen(output));
+}
+
+uint16_t parse_cmd_mq135_calibrate(char *cmd, char *output, uint16_t len)
+{
+    ltoa(mq135_calibrate(), output, 10);
+    return ECMD_FINAL(strlen(output));
 }
 
 uint16_t
 parse_cmd_mq135_ro(char *cmd, char *output, uint16_t len)
 {
-  long ret = mq135_getro(mq135_getres(mq135_adc),MQ135_DEFAULTPPM);
-  if (ret == 0)
-    return
-      ECMD_FINAL(snprintf_P(output, len, PSTR("error reading from sensor")));
+  long ret = mq135_getro(mq135_getrs(mq135_adc),MQ135_DEFAULTPPM);
 #ifdef ECMD_MIRROR_REQUEST
   return ECMD_FINAL(snprintf_P(output, len, PSTR("mq135 ro %d"), ret));
 #else
@@ -65,23 +60,14 @@ parse_cmd_mq135_ro(char *cmd, char *output, uint16_t len)
 }
 
 int16_t
-parse_cmd_mq135_res(char *cmd, char *output, uint16_t len)
+parse_cmd_mq135_rs(char *cmd, char *output, uint16_t len)
 {
-  long ret = mq135_getres(mq135_adc);
-  if (ret == 0)
-    return
-      ECMD_FINAL(snprintf_P(output, len, PSTR("error reading from sensor")));
+  long ret = mq135_getrs(mq135_adc);
 #ifdef ECMD_MIRROR_REQUEST
   return ECMD_FINAL(snprintf_P(output, len, PSTR("mq135 ppm %u"), ret));
 #else
   return ECMD_FINAL(snprintf_P(output, len, PSTR("%u"), ret));
 #endif
-}
-
-uint16_t parse_cmd_mq135_calibrate(char *cmd, char *output, uint16_t len)
-{
-    ltoa(mq135_calibrate(), output, 10);
-    return ECMD_FINAL(strlen(output));
 }
 
 
@@ -99,13 +85,14 @@ uint16_t parse_cmd_mq135_defro(char *cmd, char *output, uint16_t len)
   }
 }
 
-
 /*
   -- Ethersex META --
   block([[MQ135]] commands)
   ecmd_feature(mq135_ppm, "mq135 ppm",, get the ppm concentration)
-  ecmd_feature(mq135_ro, "mq135 ro",, get the measured ro value)
-  ecmd_feature(mq135_res, "mq135 res",, get the measured ro value)
+#ifndef MQ135_AUTOTUNE_SUPPORT 
   ecmd_feature(mq135_calibrate, "mq135 calibrate",, run calibration of defaultro)
+#endif
+  ecmd_feature(mq135_ro, "mq135 ro",, get the measured ro value)
+  ecmd_feature(mq135_rs, "mq135 rs",, get the measured rs value)
   ecmd_feature(mq135_defro, "mq135 defaultro",, get/set the default ro value)
 */
