@@ -51,7 +51,7 @@ uint16_t parse_cmd_mq2_calibrate(char *cmd, char *output, uint16_t len)
 uint16_t
 parse_cmd_mq2_ro(char *cmd, char *output, uint16_t len)
 {
-  long ret = mq2_getro(mq2_getres(mq2_adc),1);
+  long ret = mq2_getro(mq2_getrs(mq2_adc),MQ2_DEFAULTPPM);
 #ifdef ECMD_MIRROR_REQUEST
   return ECMD_FINAL(snprintf_P(output, len, PSTR("mq2 ro %d"), ret));
 #else

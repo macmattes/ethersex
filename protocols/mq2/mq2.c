@@ -91,7 +91,7 @@ mq2_calculation(void) {
 		mq2_res = mq2_getrs(mq2_adc);
 
 		//get ro
-		mq2_ro = mq2_getro(mq2_res, 1);
+		mq2_ro = mq2_getro(mq2_res, MQ2_DEFAULTPPM);
 
 		//convert to ppm (using defaultro) average
                 mq2_ppm = mq2_getppm(mq2_res, mq2_defaultro);

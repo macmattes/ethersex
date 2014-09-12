@@ -34,6 +34,7 @@ double mq2_adc;
 #define MQ2_EXPONENT -2.7 //CH4 gas value
 #define MQ2_MAXRSRO 3.000 //for CH4 3.000
 #define MQ2_MINRSRO 0.600 //for CH4
+#define MQ2_DEFAULTPPM 0.100 //for CH4
 
 //functions
 double mq2_getrs(double adc);
