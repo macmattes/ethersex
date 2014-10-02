@@ -34,28 +34,25 @@ dep_bool_menu "I2C master" I2C_MASTER_SUPPORT "$(not $I2C_SLAVE_SUPPORT)" $ARCH_
   dep_bool "I2C BH1750 light sensor"  I2C_BH1750_SUPPORT  $I2C_MASTER_SUPPORT
   dep_bool "I2C TCS3414CS DIGITAL COLOR LIGHT SENSOR"  I2C_TCS3414CS_SUPPORT  $I2C_MASTER_SUPPORT
   if [ "$I2C_TCS3414CS_SUPPORT" = "y" ]; then
-    dep_bool "    TCS3414CS Autotune Gain Value" I2C_TCS3414CS_AUTOTUNE_SUPPORT $I2C_MASTER_SUPPORT
-  if [ "$I2C_TCS3414CS_AUTOTUNE_SUPPORT" = "n" ]; then
     choice '   TCS3414CS GAIN VALUE' \
-           "1    GAIN_1                \
-            4    GAIN_4                 \
-	    16   GAIN_16                 \
-            64   GAIN_64"                 \
-           '64' I2C_TCS3414CS_GAIN
-  fi
+           "1    GAIN_1              \
+            4    GAIN_4              \
+	    16   GAIN_16             \
+            64   GAIN_64"            \
+           '1' I2C_TCS3414CS_GAIN
     choice '    TCS3414CS Prescaler' \
-           "1    PRESCALER_1                \
-            2    PRESCALER_2                 \
-            4    PRESCALER_4                 \
-            8    PRESCALER_8                 \
-            16    PRESCALER_16                 \
-            32    PRESCALER_32                 \
-            64    PRESCALER_64"                \
-           '1' I2C_TCS3414CS_PRESCALER
-    choice '  TCS3414CS INTEGRATION TIME' \
-           "12    INTEGRATION_TIME_12ms                \
-            100   INTEGRATION_TIME_100ms                 \
-            400   INTEGRATION_TIME_400ms"                 \
+           "1    PRESCALER_1         \
+            2    PRESCALER_2         \
+            4    PRESCALER_4         \
+            8    PRESCALER_8         \
+            16    PRESCALER_16       \
+            32    PRESCALER_32       \
+            64    PRESCALER_64"      \
+           '4' I2C_TCS3414CS_PRESCALER
+    choice '  TCS3414CS INTEGRATION TIME' 	\
+           "12    INTEGRATION_TIME_12ms         \
+            100   INTEGRATION_TIME_100ms        \
+            400   INTEGRATION_TIME_400ms"       \
            '12' I2C_TCS3414CS_INTEGRATION_TIME
   fi
 
