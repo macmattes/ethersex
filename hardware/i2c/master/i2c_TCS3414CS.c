@@ -17,13 +17,12 @@
 #ifdef I2C_TCS3414CS_SUPPORT
 
 /* global variables, accessible for this module only */ 
-//static color_t current_color = RED;
 uint16_t i,green,red,blue,clr,ctl;
 uint16_t TCS3414values[4]; // [Clear,Red,Green,Blue]
+double CIEvalues[3]; // L,x,y
 uint16_t integrationTime = 12;
 uint16_t gain = 1;
 uint8_t gainstate = 0;
-
 double ColorTemperature = 0;
 double Illuminance = 0;
 
@@ -33,13 +32,10 @@ double Illuminance = 0;
 
 void TCS3414CS_init()
 {  	
-	//setTimingReg(INTEG_MODE_FREE);//Set free mode
 	setIntegrationTime(I2C_TCS3414CS_INTEGRATION_TIME);
-	//setGain(GAIN_16|PRESCALER_2);
 	setGain(I2C_TCS3414CS_GAIN|I2C_TCS3414CS_PRESCALER);
-	setEnableADC();//Start ADC of the color sensor
-	//_delay_ms(integrationTime);
-        _delay_ms(12);
+	setEnableADC();
+        _delay_ms(400);
     #ifdef DEBUG_I2C
         debug_printf("I2C: i2c_tcs3414cs: init done\n");
     #endif
@@ -75,7 +71,6 @@ void setIntegrationTime(int x)
     goto end;
 end:
   i2c_master_stop();
-/*
 	switch(x) 
 	{
 		case INTEGRATION_TIME_12ms:
@@ -91,24 +86,18 @@ end:
 			integrationTime = 12;
 			break;
 	}
-*/
 }
 
 void setGain(int x)
 {
-
-   //Wire.beginTransmission(COLOR_SENSOR_ADDR);
-  if (!i2c_master_select(COLOR_SENSOR_ADDR, TW_WRITE))
+if (!i2c_master_select(COLOR_SENSOR_ADDR, TW_WRITE))
     goto end;
-   //Wire.write(REG_GAIN);
   TWDR = REG_GAIN;
   if (i2c_master_transmit_with_ack() != TW_MT_DATA_ACK)
     goto end;
-   //Wire.write(x);
   TWDR = x;
   if (i2c_master_transmit_with_ack() != TW_MT_DATA_NACK)
     goto end;
-   //Wire.endTransmission();
 end:
   i2c_master_stop();
 }
@@ -136,21 +125,18 @@ end:
 void readRGB()
 {
   uint8_t data[8];
+  double CCT = 0;
 
-  /*select slave in write mode */
   if (!i2c_master_select(COLOR_SENSOR_ADDR, TW_WRITE))
     goto end;
-  /*send the dataaddress */
   TWDR = REG_BLOCK_READ;
   if (i2c_master_transmit_with_ack() != TW_MT_DATA_ACK)
     goto end;
 
-  _delay_ms(10);		// for slow devices
+  _delay_ms(10);
 
-  /* Do an repeated start condition */
   if (i2c_master_start() != TW_REP_START)
     goto end;
-  /*select the slave in read mode */
   TWDR = (COLOR_SENSOR_ADDR << 1) | TW_READ;
   if (i2c_master_transmit() != TW_MR_SLA_ACK)
     goto end;
@@ -203,26 +189,6 @@ void readRGB()
     #endif	
 end:
   i2c_master_stop();
-    #ifdef I2C_TCS3414CS_AUTOTUNE_SUPPORT
-	uint8_t g;
-	if (clr < 500) {
-		g = 3;
-	} else if (clr < 2000) {
-		g = 2;
-	} else if (clr < 8000) {
-		g = 1;
-	} else {
-		g = 0;
-	};
-	if (gainstate != g) {
-		gainstate = g;
-		gain = pow(4,g)+1;
-		setGain(gain|I2C_TCS3414CS_PRESCALER);
-        #ifdef DEBUG_I2C
-        	debug_printf("I2C: i2c_tcs3414cs: gainstate %.0d gain %.0d\n",gainstate*10,gain);
-    	#endif
-	}
-    #endif
 }
 
 /*** takes the raw values from the sensors and converts them to
@@ -250,16 +216,15 @@ double XYZ = TCS3414tristimulus[0] + TCS3414tristimulus[1] + TCS3414tristimulus[
 TCS3414chromaticityCoordinates[0] = TCS3414tristimulus[0] / XYZ; //x
 TCS3414chromaticityCoordinates[1] = TCS3414tristimulus[1] / XYZ; //y
 
-double n = (TCS3414chromaticityCoordinates[0] - 0.3320) / (0.1858 - TCS3414chromaticityCoordinates[1]);
+//set CIE(L*,x*,y*) Values
+CIEvalues[0]=TCS3414tristimulus[1]; //CIE L*
+CIEvalues[1]=TCS3414chromaticityCoordinates[0]; //CIE x*
+CIEvalues[2]=TCS3414chromaticityCoordinates[1]; //CIE y*
 
-
-        #ifdef DEBUG_I2C
-        	debug_printf("I2C: i2c_tcs3414cs: colortemp %.0d\n",(uint32_t)n);
-    	#endif
-
-
-double CCT = ( (449*pow(n,3)) + (3525*pow(n,2)) + (6823.3 * n) + 5520.33 );
-
+if ((TCS3414chromaticityCoordinates[0] > 0 ) && (TCS3414chromaticityCoordinates[1] > 0) {
+	double n = (TCS3414chromaticityCoordinates[0] - 0.3320) / (0.1858 - TCS3414chromaticityCoordinates[1]);
+	CCT = ( (449*pow(n,3)) + (3525*pow(n,2)) + (6823.3 * n) + 5520.33 );
+	}
 return CCT;
 }
 
