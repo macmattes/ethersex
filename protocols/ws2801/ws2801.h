@@ -41,6 +41,8 @@ uint16_t ws2801_port;
 uint8_t ws2801_outputUniverse;
 uint16_t ws2801_colortemp;
 uint8_t ws2801_artnet_state;
+uint8_t ws2801_pixels;
+uint8_t ws2801_dimmer;
 
 #ifdef DEBUG_WS2801
 #include "core/debug.h"
@@ -217,7 +219,7 @@ void ws2801_init(void);
 void ws2801_sendPollReply(void);
 void ws2801_main(void);
 void ws2801_get(void);
-void ws2801_setall(unsigned char val);
+void ws2801_setColor(uint8_t r, uint8_t g, uint8_t b);
 void ws2801_setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b);
 void ws2801_show_storage(void);
 void ws2801_writeByte(unsigned char Send);

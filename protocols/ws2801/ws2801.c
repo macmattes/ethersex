@@ -67,7 +67,9 @@ uint16_t ws2801_port = CONF_WS2801_PORT;
 uint8_t ws2801_netConfig = NETCONFIG_DEFAULT;
 
 volatile unsigned char  ws2801_dmxUniverse[512];
-volatile uint16_t ws2801_dmxChannels = 0;
+volatile uint16_t ws2801_artnetChannels = 0;
+uint8_t ws2801_pixels = CONF_WS2801_PIXELS;
+uint8_t ws2801_dimmer = 255;
 
 const char ws2801_ID[8] PROGMEM = "Art-Net";
 uint8_t ws2801_artnet_state = 1;
@@ -248,8 +250,8 @@ ws2801_get(void)
      {
       if (dmx->universe == ((ws2801_subNet << 4) | ws2801_outputUniverse))
       {
-	  ws2801_dmxChannels = (dmx->lengthHi << 8) | dmx->length;
-          memcpy((unsigned char*)&ws2801_dmxUniverse[0], &(dmx->dataStart), ws2801_dmxChannels);
+	  ws2801_artnetChannels = (dmx->lengthHi << 8) | dmx->length;
+          memcpy((unsigned char*)&ws2801_dmxUniverse[0], &(dmx->dataStart), ws2801_artnetChannels);
           if (ws2801_sendPollReplyOnChange == TRUE)
           {
             ws2801_pollReplyCounter++;
@@ -268,49 +270,26 @@ ws2801_get(void)
   }
 }
 
-void ws2801_setall(unsigned char val)
+void ws2801_setColor(uint8_t r, uint8_t g, uint8_t b)
 {
 	uint16_t dmxch;
-	for(dmxch = 0; dmxch < 510; dmxch++)
+	for(dmxch = 0; dmxch < ws2801_pixels; dmxch++)
 	{
-		ws2801_writeByte(val);
+		ws2801_dmxUniverse[(dmxch*3)+0] = r;
+		ws2801_dmxUniverse[(dmxch*3)+1] = g;
+		ws2801_dmxUniverse[(dmxch*3)+2] = b;
 	}
-    
-    	if (dmxch == ws2801_dmxChannels) {
-    	ws2801_showPixel();
-    	}
-}
-
-void ws2801_show_storage(void)
-{
-	uint16_t dmxch;
-	for(dmxch = 0; dmxch < ws2801_dmxChannels; dmxch++)
-	{
-		ws2801_writeByte(ws2801_dmxUniverse[dmxch]);
-	}
-    
-    	if (dmxch == ws2801_dmxChannels) {
-    	ws2801_showPixel();
+    	if (dmxch == ws2801_pixels) {
+    	ws2801_show_storage();
     	}
 }
 
 void ws2801_setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b)
 {
-	uint16_t pix;
-	for(pix = 0; pix < 171; pix++)
-	{
-	   if ((pix == n)||(n == 172)) {
-		ws2801_writeByte(r);  //r
-		ws2801_writeByte(g);  //g
-		ws2801_writeByte(b);  //b
-	   }
-	   else {
-		ws2801_writeByte(0);  //r
-		ws2801_writeByte(0);  //g
-		ws2801_writeByte(0);  //b
-	   }
-	}
-    	ws2801_showPixel();
+	ws2801_dmxUniverse[(n*3)+0] = r;
+	ws2801_dmxUniverse[(n*3)+1] = g;
+	ws2801_dmxUniverse[(n*3)+2] = b;
+    	ws2801_show_storage();
 }
 
 void ws2801_setColorTemp(uint16_t k)
@@ -374,21 +353,22 @@ void ws2801_setColorTemp(uint16_t k)
         }
 
     }
-    /*
-    ws2801 Datenausgabe start
-    */
-	uint16_t pix;
-	for(pix = 0; pix < 171; pix++)
+    ws2801_setColor(Red,Green,Blue);
+}
+
+//Datenausgabe
+
+void ws2801_show_storage(void)
+{
+	uint16_t dmxch;
+	for(dmxch = 0; dmxch < ws2801_pixels; dmxch++)
 	{
-		ws2801_writeByte(Red);  //r
-		ws2801_writeByte(Green); //g
-		ws2801_writeByte(Blue);  //b
+		ws2801_writeByte(ws2801_dmxUniverse[dmxch] * ws2801_dimmer/255);
 	}
     
+    	if (dmxch == ws2801_pixels) {
     	ws2801_showPixel();
-     /*
-     ws2801 Datenausgabe ende
-     */
+    	}
 }
 
 void ws2801_writeByte(unsigned char Send)

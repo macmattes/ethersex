@@ -63,11 +63,25 @@ int16_t parse_cmd_ws2801_artnet_state(char *cmd, char *output, uint16_t len)
   }
 }
 
+int16_t parse_cmd_ws2801_dimmer(char *cmd, char *output, uint16_t len)
+{
+  if (cmd[0])
+  {
+    ws2801_dimmer = atoi(cmd);
+    ws2801_show_storage();
+    return ECMD_FINAL_OK;
+  }
+  else
+  {
+    itoa(ws2801_dimmer, output, 10);
+    return ECMD_FINAL(strlen(output));
+  }
+}
+
 int16_t parse_cmd_ws2801_setall(char *cmd, char *output, uint16_t len)
 {
   if (cmd[0])
   {
-    ws2801_artnet_state = 0; //disable artnet
     ws2801_setall(atoi(cmd)); //set pixel
     return ECMD_FINAL_OK;
   }
@@ -85,7 +99,6 @@ int16_t parse_cmd_ws2801_settemp(char *cmd, char *output, uint16_t len)
   WS2801_DEBUG("input: %d, Dim:%d \r\n",k);
   if (ret==1)
   {
-    ws2801_artnet_state = 0; //disable artnet
     ws2801_setColorTemp(k);
     return ECMD_FINAL_OK;
   }
@@ -109,35 +122,20 @@ int16_t parse_cmd_ws2801_set_pixel_rgb(char *cmd, char *output, uint16_t len)
         return ECMD_FINAL_OK;
     }
     else
-		return ECMD_ERR_PARSE_ERROR;
-    
+	return ECMD_ERR_PARSE_ERROR;    
 }
 
-int16_t parse_cmd_ws2801_set_pixels(char *cmd, char *output, uint16_t len)
+int16_t parse_cmd_ws2801_set_pixel_rgb(char *cmd, char *output, uint16_t len)
 {
-    uint8_t ret=0;
-    uint16_t val1=0,val2=0,val3=0,pix;
-    ret = sscanf_P(cmd, PSTR(" %2x%2x%2x"),&val1, &val2, &val3);
-    if(ret == 3) {
-	ws2801_artnet_state = 0; //disable artnet
-        /*
-   	ws2801 Datenausgabe start
-   	*/
-	for(pix = 0; pix < 171; pix++)
-		{
-			ws2801_writeByte(val1);  //r
-			ws2801_writeByte(val2);  //g
-			ws2801_writeByte(val3);  //b
-		}
-    	ws2801_showPixel();
-   	/*
-   	ws2801 Datenausgabe ende
-   	*/
-		return ECMD_FINAL_OK;
-	}
-	else
-		return ECMD_ERR_PARSE_ERROR;
-
+    uint8_t ret=0, r=0, g=0, b=0;
+    ret = sscanf_P(cmd, PSTR("%hhu %hhu %hhu"), &r, &g, &b);
+    if(ret == 3)
+	{
+        ws2801_setColor( r, g, b);
+        return ECMD_FINAL_OK;
+    }
+    else
+	return ECMD_ERR_PARSE_ERROR;    
 }
 
 
@@ -146,8 +144,8 @@ int16_t parse_cmd_ws2801_set_pixels(char *cmd, char *output, uint16_t len)
   block([[WS2801]] commands)
   ecmd_feature(ws2801_universe, "ws2801 artnet universe",UNIVERSE, set/get Universe to show)
   ecmd_feature(ws2801_artnet_state, "ws2801 artnet state",ARTNETSTATE, set/get ARTNET State)
-  ecmd_feature(ws2801_setall, "ws2801 setall",, set all channels)
-  ecmd_feature(ws2801_settemp, "ws2801 colortemp",Temperature Dimm, set Temperature)
-  ecmd_feature(ws2801_set_pixels, "ws2801 set",, Set pixel(s) values) 
+  ecmd_feature(ws2801_dimmer, "ws2801 dim",, set/get dimmer value)
+  ecmd_feature(ws2801_settemp, "ws2801 colortemp",Temperature, set/get Color Temperature)
   ecmd_feature(ws2801_set_pixel_rgb, "ws2801 rgb", PIXEL R G B, Set one pixel with rgb values)
+  ecmd_feature(ws2801_set_pixels_rgb, "ws2801 rgball",R G B, Set all pixels with rgb values) 
 */
