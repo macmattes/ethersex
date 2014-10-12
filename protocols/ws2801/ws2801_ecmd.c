@@ -78,20 +78,6 @@ int16_t parse_cmd_ws2801_dimmer(char *cmd, char *output, uint16_t len)
   }
 }
 
-int16_t parse_cmd_ws2801_setall(char *cmd, char *output, uint16_t len)
-{
-  if (cmd[0])
-  {
-    ws2801_setall(atoi(cmd)); //set pixel
-    return ECMD_FINAL_OK;
-  }
-  else
-  {
-    ws2801_setall(0);
-    return ECMD_FINAL_OK;
-  }
-}
-
 int16_t parse_cmd_ws2801_settemp(char *cmd, char *output, uint16_t len)
 {
   uint16_t ret=0, k=0;
@@ -125,7 +111,7 @@ int16_t parse_cmd_ws2801_set_pixel_rgb(char *cmd, char *output, uint16_t len)
 	return ECMD_ERR_PARSE_ERROR;    
 }
 
-int16_t parse_cmd_ws2801_set_pixel_rgb(char *cmd, char *output, uint16_t len)
+int16_t parse_cmd_ws2801_set_pixels_rgb(char *cmd, char *output, uint16_t len)
 {
     uint8_t ret=0, r=0, g=0, b=0;
     ret = sscanf_P(cmd, PSTR("%hhu %hhu %hhu"), &r, &g, &b);

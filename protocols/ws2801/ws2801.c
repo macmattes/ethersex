@@ -118,8 +118,6 @@ ws2801_init(void)
   /* enable ws2801 */
   PIN_CLEAR(WS2801_CLOCK);
   PIN_CLEAR(WS2801_DATA);
-
-  ws2801_setall(0);
   
   WS2801_DEBUG("init complete\n");
   return;

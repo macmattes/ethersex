@@ -38,20 +38,6 @@ parse_cmd_tcs3414cs_color(char *cmd, char *output, uint16_t len)
 {
   if (cmd[0])
   {
-    if (cmd[0] == "r") {
-	return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), red));
-    } else if (cmd[0] == "g") {
-        return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), green));
-    } else if (cmd[0] == "b") {
-        return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), blue));
-    } else if (cmd[0] == "c") {
-        return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), clr));
-    } else {
-    	return ECMD_ERR_PARSE_ERROR;
-    }
-  }
-  else
-  {
   return ECMD_FINAL(snprintf_P(output, len, PSTR("r:%d g:%d b:%d c:%d"), red, green, blue, clr));
   }
 }
