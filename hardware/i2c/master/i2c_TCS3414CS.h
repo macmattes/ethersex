@@ -69,11 +69,7 @@
 typedef enum {RED, GREEN, BLUE, ORANGE, VIOLET, WHITE, CLEAR} color_t;
 
 uint16_t i,green,red,blue,clr,ctl;
-uint16_t integrationTime;
-uint16_t gain;
-uint8_t gainstate;
-double ColorTemperature;
-double Illuminance;
+uint16_t Illuminance;
 
 void TCS3414CS_init();
  
@@ -88,6 +84,8 @@ void setEnableADC();
 
 void readRGB();
 
-double CCTCalc(uint16_t allcolors[]);
+void CCTCalc();
+
+uint16_t Colortemp(void);
 
 #endif

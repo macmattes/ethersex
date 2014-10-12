@@ -35,6 +35,7 @@ SUBSUBDIRS += protocols/netstat
 SUBSUBDIRS += protocols/to1
 SUBSUBDIRS += protocols/serial_line_log
 SUBSUBDIRS += protocols/msr1
+SUBSUBDIRS += protocols/vaillant
 SUBSUBDIRS += protocols/nmea
 SUBSUBDIRS += protocols/udpIO
 SUBSUBDIRS += protocols/udpstella

@@ -59,13 +59,13 @@ parse_cmd_tcs3414cs_color(char *cmd, char *output, uint16_t len)
 int16_t
 parse_cmd_tcs3414cs_colortemp(char *cmd, char *output, uint16_t len)
 {
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), (uint16_t)ColorTemperature));
+  return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), Colortemp()));
 }
 
 int16_t
 parse_cmd_tcs3414cs_illuminance(char *cmd, char *output, uint16_t len)
 {
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), (uint16_t)Illuminance));
+  return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), Illuminance));
 }
 
 

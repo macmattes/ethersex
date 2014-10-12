@@ -17,14 +17,10 @@
 #ifdef I2C_TCS3414CS_SUPPORT
 
 /* global variables, accessible for this module only */ 
-uint16_t i,green,red,blue,clr,ctl;
-uint16_t TCS3414values[4]; // [Clear,Red,Green,Blue]
-double CIEvalues[3]; // L,x,y
-uint16_t integrationTime = 12;
-uint16_t gain = 1;
-uint8_t gainstate = 0;
-double ColorTemperature = 0;
-double Illuminance = 0;
+uint16_t i,green,red,blue,clr,ctl,R,G,B;
+uint16_t Illuminance;
+double TCS3414tristimulus[3]; // [tri X, tri Y, tri Z]
+double TCS3414chromaticityCoordinates[2]; //chromaticity coordinates // [x, y]
 
 #ifndef I2C_TCS3414CS_GAIN
 #define I2C_TCS3414CS_GAIN gain
@@ -71,21 +67,6 @@ void setIntegrationTime(int x)
     goto end;
 end:
   i2c_master_stop();
-	switch(x) 
-	{
-		case INTEGRATION_TIME_12ms:
-			integrationTime = 12;
-			break;
-		case INTEGRATION_TIME_100ms:
-			integrationTime = 100;
-			break;
-		case INTEGRATION_TIME_400ms:
-			integrationTime = 400;
-			break;
-		default:
-			integrationTime = 12;
-			break;
-	}
 }
 
 void setGain(int x)
@@ -125,7 +106,6 @@ end:
 void readRGB()
 {
   uint8_t data[8];
-  double CCT = 0;
 
   if (!i2c_master_select(COLOR_SENSOR_ADDR, TW_WRITE))
     goto end;
@@ -140,75 +120,63 @@ void readRGB()
   TWDR = (COLOR_SENSOR_ADDR << 1) | TW_READ;
   if (i2c_master_transmit() != TW_MR_SLA_ACK)
     goto end;
-
   if (i2c_master_transmit_with_ack() != TW_MR_DATA_ACK)
     goto end;
-  data[0] = TWDR; //Byte Count
+  data[0] = TWDR; //DATA1LOW
   if (i2c_master_transmit_with_ack() != TW_MR_DATA_ACK)
     goto end;
-  data[1] = TWDR; //DATA1LOW
+  data[1] = TWDR; //DATA1HIGH
   if (i2c_master_transmit_with_ack() != TW_MR_DATA_ACK)
     goto end;
-  data[2] = TWDR; //DATA1HIGH
+  data[2] = TWDR; //DATA2LOW
   if (i2c_master_transmit_with_ack() != TW_MR_DATA_ACK)
     goto end;
-  data[3] = TWDR; //DATA2LOW
+  data[3] = TWDR; //DATA2HIGH
   if (i2c_master_transmit_with_ack() != TW_MR_DATA_ACK)
     goto end;
-  data[4] = TWDR; //DATA2HIGH
+  data[4] = TWDR; //DATA3LOW
   if (i2c_master_transmit_with_ack() != TW_MR_DATA_ACK)
     goto end;
-  data[5] = TWDR; //DATA3LOW
-  if (i2c_master_transmit_with_ack() != TW_MR_DATA_ACK)
-    goto end;
-  data[6] = TWDR; //DATA3HIGH
+  data[5] = TWDR; //DATA3HIGH
  if (i2c_master_transmit_with_ack() != TW_MR_DATA_ACK)
     goto end;
-  data[7] = TWDR; //DATA4LOW
+  data[6] = TWDR; //DATA4LOW
   if (i2c_master_transmit() != TW_MR_DATA_NACK)
     goto end;
-  data[8] = TWDR; //DATA4HIGH
+  data[7] = TWDR; //DATA4HIGH
 
-	green=data[2]*256+data[1];
-	red=data[4]*256+data[3];
-	blue=data[6]*256+data[5];
-	clr=data[8]*256+data[7];
+	green=data[1]*256+data[0];
+	red=data[3]*256+data[2];
+	blue=data[5]*256+data[4];
+	clr=data[7]*256+data[6];
 
     #ifdef DEBUG_I2C
+        //debug_printf("I2C: i2c_tcs3414cs: 0x%X%X 0x%X%X 0x%X%X 0x%X%X\n",data[7],data[6],data[5],data[4],data[3],data[2],data[1],data[0]);
         debug_printf("I2C: i2c_tcs3414cs: red %.0d green %.0d blue %.0d clear %.0d\n",red,green,blue,clr);
-    #endif
-
-        TCS3414values[0] = clr;
-        TCS3414values[1] = red;
-	TCS3414values[2] = green;
-	TCS3414values[3] = blue;
-
-    ColorTemperature = CCTCalc(TCS3414values);
-    #ifdef DEBUG_I2C
-        debug_printf("I2C: i2c_tcs3414cs: ColorTemp %.0dK\n",(uint16_t)ColorTemperature);
     #endif	
 end:
   i2c_master_stop();
+
+  CCTCalc();
+
 }
 
-/*** takes the raw values from the sensors and converts them to
+/* takes the raw values from the sensors and converts them to
 Correlated Color Temperature. Returns a float with CCT ***/
-double CCTCalc(uint16_t allcolors[]){
-double TCS3414tristimulus[3]; // [tri X, tri Y, tri Z]
-double TCS3414chromaticityCoordinates[2]; //chromaticity coordinates // [x, y]
+void CCTCalc(void){
 
 //calculate tristimulus values (chromaticity coordinates)
 //The tristimulus Y value represents the illuminance of our source
-TCS3414tristimulus[0] = (-0.14282 * allcolors[1]) + (1.54924 * allcolors[2]) + (-0.95641 * allcolors[3]); //X
-TCS3414tristimulus[1] = (-0.32466 * allcolors[1]) + (1.57837 * allcolors[2]) + (-0.73191 * allcolors[3]); //Y // = Illuminance
-TCS3414tristimulus[2] = (-0.68202 * allcolors[1]) + (0.77073 * allcolors[2]) + (0.56332 * allcolors[3]); //Z
+TCS3414tristimulus[0] = (-0.14282 * red) + (1.54924 * green) + (-0.95641 * blue); //X
+TCS3414tristimulus[1] = (-0.32466 * red) + (1.57837 * green) + (-0.73191 * blue); //Y // = Illuminance
+TCS3414tristimulus[2] = (-0.68202 * red) + (0.77073 * green) + (0.56332 * blue); //Z
 
-Illuminance = TCS3414tristimulus[1];
+Illuminance = (uint16_t)TCS3414tristimulus[1];
 
 double XYZ = TCS3414tristimulus[0] + TCS3414tristimulus[1] + TCS3414tristimulus[2];
 
         #ifdef DEBUG_I2C
-        	debug_printf("I2C: i2c_tcs3414cs: xyz %.0d\n",(uint16_t)XYZ);
+                debug_printf("I2C: i2c_tcs3414cs: XYZ %d\n",XYZ);
         	debug_printf("I2C: i2c_tcs3414cs: lux %.0d\n",(uint16_t)TCS3414tristimulus[1]);
     	#endif
 
@@ -216,24 +184,27 @@ double XYZ = TCS3414tristimulus[0] + TCS3414tristimulus[1] + TCS3414tristimulus[
 TCS3414chromaticityCoordinates[0] = TCS3414tristimulus[0] / XYZ; //x
 TCS3414chromaticityCoordinates[1] = TCS3414tristimulus[1] / XYZ; //y
 
-//set CIE(L*,x*,y*) Values
-CIEvalues[0]=TCS3414tristimulus[1]; //CIE L*
-CIEvalues[1]=TCS3414chromaticityCoordinates[0]; //CIE x*
-CIEvalues[2]=TCS3414chromaticityCoordinates[1]; //CIE y*
+    #ifdef DEBUG_I2C
+        debug_printf("I2C: i2c_tcs3414cs: ColorTemp %.0dK\n",Colortemp());
+    #endif
 
-if ((TCS3414chromaticityCoordinates[0] > 0 ) && (TCS3414chromaticityCoordinates[1] > 0) {
-	double n = (TCS3414chromaticityCoordinates[0] - 0.3320) / (0.1858 - TCS3414chromaticityCoordinates[1]);
-	CCT = ( (449*pow(n,3)) + (3525*pow(n,2)) + (6823.3 * n) + 5520.33 );
-	}
-return CCT;
 }
 
+uint16_t Colortemp(void)
+{
+  uint16_t CCT = 0;
+  if ((TCS3414chromaticityCoordinates[0] > 0.25)&&(TCS3414chromaticityCoordinates[1] > 0.25)) {
+    double n = (TCS3414chromaticityCoordinates[0] - 0.3320) / (0.1858 - TCS3414chromaticityCoordinates[1]);
+    CCT = (uint16_t)( (449*pow(n,3)) + (3525*pow(n,2)) + (6823.3 * n) + 5520.33 );
+  }
+return CCT;
+}
 
 /*
  -- Ethersex META --
  header(hardware/i2c/master/i2c_TCS3414CS.h)
  init(TCS3414CS_init)
- timer(200, readRGB())
+ timer(500, readRGB())
  */
 
 #endif /* I2C_TCS3414CS_SUPPORT */
