@@ -65,11 +65,9 @@
 #define PRESCALER_16 0x04
 #define PRESCALER_32 0x05
 #define PRESCALER_64 0x06
- 
-typedef enum {RED, GREEN, BLUE, ORANGE, VIOLET, WHITE, CLEAR} color_t;
 
 uint16_t i,green,red,blue,clr,ctl;
-uint16_t Illuminance;
+uint16_t Illuminance,Colortemp;
 
 void TCS3414CS_init();
  
@@ -84,8 +82,8 @@ void setEnableADC();
 
 void readRGB();
 
-void CCTCalc();
-
-uint16_t Colortemp(void);
+#ifdef I2C_TCS3414CS_CALC_SUPPORT
+void TSCalc();
+#endif
 
 #endif

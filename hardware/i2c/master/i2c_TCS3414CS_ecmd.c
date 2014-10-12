@@ -56,10 +56,11 @@ parse_cmd_tcs3414cs_color(char *cmd, char *output, uint16_t len)
   }
 }
 
+#ifdef I2C_TCS3414CS_CALC_SUPPORT
 int16_t
 parse_cmd_tcs3414cs_colortemp(char *cmd, char *output, uint16_t len)
 {
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), Colortemp()));
+  return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), Colortemp));
 }
 
 int16_t
@@ -67,13 +68,15 @@ parse_cmd_tcs3414cs_illuminance(char *cmd, char *output, uint16_t len)
 {
   return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), Illuminance));
 }
-
+#endif
 
 /*
 -- Ethersex META --
 
   block([[I2C]] (TWI))
   ecmd_feature(tcs3414cs_color, "tcs3414cs rgb", CHIPADDR, get color values)
+#ifdef I2C_TCS3414CS_CALC_SUPPORT
   ecmd_feature(tcs3414cs_colortemp, "tcs3414cs colortemp", CHIPADDR, get colortemp value)
   ecmd_feature(tcs3414cs_illuminance, "tcs3414cs lux", CHIPADDR, get colortemp value)
+#endif
 */

@@ -54,6 +54,7 @@ dep_bool_menu "I2C master" I2C_MASTER_SUPPORT "$(not $I2C_SLAVE_SUPPORT)" $ARCH_
             100   INTEGRATION_TIME_100ms        \
             400   INTEGRATION_TIME_400ms"       \
            '12' I2C_TCS3414CS_INTEGRATION_TIME
+    dep_bool "  Calculation Support" I2C_TCS3414CS_CALC_SUPPORT $I2C_TCS3414CS_CALC_SUPPORT
   fi
 
   dep_bool "I2C BMP085 barometric pressure sensor" I2C_BMP085_SUPPORT $I2C_MASTER_SUPPORT

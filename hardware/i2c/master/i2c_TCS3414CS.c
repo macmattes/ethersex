@@ -17,10 +17,10 @@
 #ifdef I2C_TCS3414CS_SUPPORT
 
 /* global variables, accessible for this module only */ 
-uint16_t i,green,red,blue,clr,ctl,R,G,B;
-uint16_t Illuminance;
-double TCS3414tristimulus[3]; // [tri X, tri Y, tri Z]
-double TCS3414chromaticityCoordinates[2]; //chromaticity coordinates // [x, y]
+uint16_t i,green,red,blue,clr;
+#ifdef I2C_TCS3414CS_CALC_SUPPORT
+uint16_t Illuminance,Colortemp;
+#endif
 
 #ifndef I2C_TCS3414CS_GAIN
 #define I2C_TCS3414CS_GAIN gain
@@ -157,48 +157,50 @@ void readRGB()
 end:
   i2c_master_stop();
 
-  CCTCalc();
+#ifdef I2C_TCS3414CS_CALC_SUPPORT
+  TSCalc(); // Berechnen
+#endif
 
 }
 
-/* takes the raw values from the sensors and converts them to
-Correlated Color Temperature. Returns a float with CCT ***/
-void CCTCalc(void){
+#ifdef I2C_TCS3414CS_CALC_SUPPORT
+void TSCalc(void)
+{
 
-//calculate tristimulus values (chromaticity coordinates)
-//The tristimulus Y value represents the illuminance of our source
-TCS3414tristimulus[0] = (-0.14282 * red) + (1.54924 * green) + (-0.95641 * blue); //X
-TCS3414tristimulus[1] = (-0.32466 * red) + (1.57837 * green) + (-0.73191 * blue); //Y // = Illuminance
-TCS3414tristimulus[2] = (-0.68202 * red) + (0.77073 * green) + (0.56332 * blue); //Z
+double TCS3414tristimulus[3]; // [tri X, tri Y, tri Z]
+double TCS3414chromaticityCoordinates[2]; //chromaticity coordinates // [x, y]
 
-Illuminance = (uint16_t)TCS3414tristimulus[1];
+  //calculate tristimulus values (chromaticity coordinates)
+  //The tristimulus Y value represents the illuminance of our source
+  TCS3414tristimulus[0] = (-0.14282 * red) + (1.54924 * green) + (-0.95641 * blue); //X
+  TCS3414tristimulus[1] = (-0.32466 * red) + (1.57837 * green) + (-0.73191 * blue); //Y // = Illuminance
+  TCS3414tristimulus[2] = (-0.68202 * red) + (0.77073 * green) + (0.56332 * blue); //Z
 
-double XYZ = TCS3414tristimulus[0] + TCS3414tristimulus[1] + TCS3414tristimulus[2];
+  Illuminance = (uint16_t)TCS3414tristimulus[1];
+
+  double XYZ = TCS3414tristimulus[0] + TCS3414tristimulus[1] + TCS3414tristimulus[2];
 
         #ifdef DEBUG_I2C
                 debug_printf("I2C: i2c_tcs3414cs: XYZ %d\n",XYZ);
         	debug_printf("I2C: i2c_tcs3414cs: lux %.0d\n",(uint16_t)TCS3414tristimulus[1]);
     	#endif
 
-//calculate the chromaticiy coordinates
-TCS3414chromaticityCoordinates[0] = TCS3414tristimulus[0] / XYZ; //x
-TCS3414chromaticityCoordinates[1] = TCS3414tristimulus[1] / XYZ; //y
+  //calculate the chromaticiy coordinates
+  TCS3414chromaticityCoordinates[0] = TCS3414tristimulus[0] / XYZ; //x
+  TCS3414chromaticityCoordinates[1] = TCS3414tristimulus[1] / XYZ; //y
 
-    #ifdef DEBUG_I2C
-        debug_printf("I2C: i2c_tcs3414cs: ColorTemp %.0dK\n",Colortemp());
-    #endif
-
-}
-
-uint16_t Colortemp(void)
-{
-  uint16_t CCT = 0;
+  Colortemp = 0;
   if ((TCS3414chromaticityCoordinates[0] > 0.25)&&(TCS3414chromaticityCoordinates[1] > 0.25)) {
     double n = (TCS3414chromaticityCoordinates[0] - 0.3320) / (0.1858 - TCS3414chromaticityCoordinates[1]);
-    CCT = (uint16_t)( (449*pow(n,3)) + (3525*pow(n,2)) + (6823.3 * n) + 5520.33 );
+    Colortemp = (uint16_t)( (449*pow(n,3)) + (3525*pow(n,2)) + (6823.3 * n) + 5520.33 );
   }
-return CCT;
+  #ifdef DEBUG_I2C
+    debug_printf("I2C: i2c_tcs3414cs: ColorTemp %.0dK\n",Colortemp);
+  #endif
+
+
 }
+#endif
 
 /*
  -- Ethersex META --
