@@ -395,6 +395,11 @@ void ws2801_showPixel(void) {
     PIN_CLEAR(WS2801_CLOCK); // set clock LOW
     _delay_us(500); // wait for 500uS to display frame on ws2801
 }
+
+void ws2801_set_artnet_state (uint8_t val) {
+	ws2801_artnet_state = val;
+}
+
 #endif /* WS2801_SUPPORT */
 
 /*

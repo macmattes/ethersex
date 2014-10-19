@@ -11,10 +11,6 @@ ifdef(`conf_ONEWIRE', `dnl
   ONEWIRE_PORT_RANGE(PA7, PA7)
 ')dnl
 
-ifdef(`conf_DHT', `dnl
-  pin(DHT, PA6, INPUT)
-')
-
 ifdef(`conf_STELLA', `dnl
   /* stella port 1 */
   STELLA_PORT1_RANGE(PC0, PC7)

@@ -1,0 +1,59 @@
+//########################################################################################################################
+
+CONTROL_START
+
+#include <string.h>
+#include <stdlib.h>
+#include "hardware/input/buttons/buttons.h"
+#include "protocols/ws2801/ws2801.h"
+
+
+GLOBAL(g_button,0,uint8_t)
+GLOBAL(g_status,0,uint8_t)
+GLOBAL(g_ws2801_state,0,uint8_t)
+ECMD_GLOBAL(g_ws2801_val,3500,uint16_t)
+
+
+void hook_buttons_handler(buttons_ButtonsType button, uint8_t status) {
+	if (status != 0) {
+		g_button=button;
+		g_status=status;
+	} else if ((status == 0)&&(g_status != 0)) {
+		// garage
+        	if ((g_button == 0)&&(g_status == 1)) {
+			PIN_TOGGLE(Ausgang1); // licht
+		} else if ((g_button == 0)&&(g_status == 2)) {
+			PIN_TOGGLE(Ausgang5); // steckdosen
+		}
+		// ws2801
+        	if ((g_button == 1)&&(g_status == 1)) {
+			ws2801_set_artnet_state(0); // artnet aus
+			if (g_ws2801_state == 0) {
+				g_ws2801_state=1;
+				ws2801_setColor(255,255,255); // an
+			} else if (g_ws2801_state == 1) {
+				g_ws2801_state=0;
+				ws2801_setColor(0,0,0); // aus
+			}
+		} else if ((g_button == 1)&&(g_status == 2)) {
+			g_ws2801_state=1;
+			ws2801_set_artnet_state(1); // artnet an
+		}
+		// treppe
+        	if ((g_button == 2)&&(g_status == 1)) {
+			PIN_TOGGLE(Ausgang2); // licht
+		}
+	}
+}
+
+//###############################################################################################
+
+ON STARTUP DO
+
+  hook_buttons_input_register(hook_buttons_handler);
+  ws2801_set_artnet_state(1);
+
+END
+
+CONTROL_END
+
