@@ -69,10 +69,11 @@ uint8_t ws2801_netConfig = NETCONFIG_DEFAULT;
 volatile unsigned char  ws2801_dmxUniverse[512];
 volatile uint16_t ws2801_artnetChannels = 0;
 uint8_t ws2801_pixels = CONF_WS2801_PIXELS;
+uint16_t ws2801_channels = CONF_WS2801_PIXELS*3;
 uint8_t ws2801_dimmer = 255;
 
 const char ws2801_ID[8] PROGMEM = "Art-Net";
-uint8_t ws2801_artnet_state = 1;
+uint8_t ws2801_artnet_state = 0;
 
 /* ----------------------------------------------------------------------------
  * initialization of network settings
@@ -99,7 +100,7 @@ ws2801_init(void)
   /* read subnet */
   ws2801_subNet = SUBNET_DEFAULT;
   ws2801_outputUniverse = CONF_WS2801_UNIVERSE;
-  ws2801_colortemp = 2500;
+  ws2801_colortemp = 2700;
   strcpy_P(ws2801_shortName, PSTR("e6ArtNode"));
   strcpy_P(ws2801_longName, PSTR("e6ArtNode hostname: " CONF_HOSTNAME));
 
@@ -118,7 +119,12 @@ ws2801_init(void)
   /* enable ws2801 */
   PIN_CLEAR(WS2801_CLOCK);
   PIN_CLEAR(WS2801_DATA);
-  
+
+#ifdef WS2801_ARTNET_STARTUP
+  /* enable artnet */
+  ws2801_artnet_state = 1;
+#endif
+
   WS2801_DEBUG("init complete\n");
   return;
 }
@@ -270,14 +276,14 @@ ws2801_get(void)
 
 void ws2801_setColor(uint8_t r, uint8_t g, uint8_t b)
 {
-	uint16_t dmxch;
-	for(dmxch = 0; dmxch < ws2801_pixels; dmxch++)
+	uint16_t dmxpx;
+	for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
 	{
-		ws2801_dmxUniverse[(dmxch*3)+0] = r;
-		ws2801_dmxUniverse[(dmxch*3)+1] = g;
-		ws2801_dmxUniverse[(dmxch*3)+2] = b;
+		ws2801_dmxUniverse[(dmxpx*3)+0] = r;
+		ws2801_dmxUniverse[(dmxpx*3)+1] = g;
+		ws2801_dmxUniverse[(dmxpx*3)+2] = b;
 	}
-    	if (dmxch == ws2801_pixels) {
+    	if (dmxpx == ws2801_pixels) {
     	ws2801_show_storage();
     	}
 }
@@ -359,12 +365,12 @@ void ws2801_setColorTemp(uint16_t k)
 void ws2801_show_storage(void)
 {
 	uint16_t dmxch;
-	for(dmxch = 0; dmxch < ws2801_pixels; dmxch++)
+	for(dmxch = 0; dmxch < ws2801_channels; dmxch++)
 	{
 		ws2801_writeByte(ws2801_dmxUniverse[dmxch] * ws2801_dimmer/255);
 	}
     
-    	if (dmxch == ws2801_pixels) {
+    	if (dmxch == ws2801_channels) {
     	ws2801_showPixel();
     	}
 }

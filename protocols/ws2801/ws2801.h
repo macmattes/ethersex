@@ -42,6 +42,7 @@ uint8_t ws2801_outputUniverse;
 uint16_t ws2801_colortemp;
 uint8_t ws2801_artnet_state;
 uint8_t ws2801_pixels;
+uint16_t ws2801_channels;
 uint8_t ws2801_dimmer;
 
 #ifdef DEBUG_WS2801
