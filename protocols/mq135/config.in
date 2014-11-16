@@ -1,11 +1,7 @@
-dep_bool_menu  "MQ135 Combustible Gas Sensor Support" MQ135_SUPPORT $ADC_SUPPORT $ARCH_AVR
-  if [ "$MQ135_SUPPORT" = "y" ]; then
+ dep_bool  "MQ135 Air-Quality Support" MQ135_SUPPORT $ADC_SUPPORT $ARCH_AVR
+    if [ "$MQ135_SUPPORT" = "y" ]; then
 	int "Analoginput for MQ135" MQ135_ADCPORT 5
-        int "default Ro for Default ppm of CH4" MQ135_DEFAULTRO 20000
-        int "BalanceResistor for Rs" MQ135_BALANCERESISTOR 1000
-        int "smoothing of adc and ppm" MQ135_SMOOTHING 3
-   dep_bool "Autotune to 0 ppm" MQ135_AUTOTUNE_SUPPORT
-    comment "-------------------------"
-   dep_bool "MQ135 Debug" MQ135_DEBUG_SUPPORT
-  fi
-endmenu
+        int "default ppm of CO2 for calibration" MQ135_DEFAULTPPM 392
+        int "default Ro for MQ135_DEFAULTPPM ppm of CO2" MQ135_DEFAULTRO 41763
+        int "default BalanceResistor for Rs" MQ135_BALANCERESISTOR 22000
+    fi
