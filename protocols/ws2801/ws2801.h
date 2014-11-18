@@ -223,6 +223,7 @@ void ws2801_main(void);
 void ws2801_get(void);
 void ws2801_setColor(uint8_t r, uint8_t g, uint8_t b);
 void ws2801_setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b);
+void hsv_to_rgb(unsigned char h, unsigned char s, unsigned char v);
 void ws2801_show_storage(void);
 void ws2801_writeByte(unsigned char Send);
 void ws2801_showPixel(void);
