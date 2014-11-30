@@ -1,0 +1,38 @@
+CONTROL_START
+
+#include "protocols/httplog/httplog.h"
+#include <stdlib.h>
+#include "protocols/syslog/syslog.h"
+#include "core/debug.h"
+
+ECMD_GLOBAL(fhttk, 2,);
+
+PIN_SET(Ausgang2);
+
+THREAD(fhttk)
+	uint8_t pin=0;
+	ON PIN_HIGH(Eingang1) DO
+		pin=1;
+	END
+	ON PIN_HIGH(Eingang2) DO
+		pin=1;
+	END
+	ON PIN_HIGH(Eingang3) DO
+		pin=1;
+	END
+	ON PIN_HIGH(Eingang4) DO
+		pin=1;
+	END
+	ON (pin==1 && fhttk==2) || fhttk==1 DO
+		PIN_SET(Ausgang1);
+	END
+	ON (pin==0 && fhttk==2) || fhttk==0 DO
+		PIN_CLEAR(Ausgang1);
+	END
+THREAD_END(fhttk)
+
+ON STARTUP DO
+  THREAD_START(fhttk);
+END
+
+CONTROL_END

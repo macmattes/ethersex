@@ -390,7 +390,7 @@ switch( i )
  	r = v; g = p; b = q; break;
  	}
  }
-
+}
 //Datenausgabe
 
 void ws2801_show_storage(void)

@@ -29,7 +29,7 @@ double mq135_defaultro;
 double mq135_ro = 0;
 double mq135_res = 0;
 double mq135_adc = 0;
-uint16_t mq135_avg=MQ135_SMOOTHING;
+uint16_t mq135_avg=5;
 
 #ifdef MQ135_AUTOTUNE_SUPPORT
 double mq135_res_max;
