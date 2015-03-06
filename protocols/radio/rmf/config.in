@@ -1,0 +1,3 @@
+ dep_bool_menu  "RMF Support" RMF_SUPPORT $ARCH_AVR
+    int "Default Ident-CODE (hex)" RMF_DEFIDENT 0x1234567
+  endmenu
