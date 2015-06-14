@@ -1,7 +1,5 @@
 /*
  *
- * Copyright (c) 2007 by Christian Dietrich <stettberger@dokucode.de>
- * Copyright (c) 2008 by Stefan Siegl <stesie@brokenpipe.de>
  * Copyright (c) 2015 by Daniel Lindner <daniel.lindner@gmx.de>
  *
  * This program is free software; you can redistribute it and/or
@@ -22,17 +20,9 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
-#ifndef _SYSLOG_H
-#define _SYSLOG_H
+#ifndef _BSBPORT_MQTT_H
+#define _BSBPORT_MQTT_H
 
-#include <avr/pgmspace.h>
-#include "protocols/uip/uip.h"
+void bsbport_mqtt_init();
 
-#define MAX_DYNAMIC_SYSLOG_BUFFER 100
-
-uint8_t syslog_send(const char *message);
-uint8_t syslog_sendf_P(PGM_P message, ...);
-
-void syslog_flush(void);
-
-#endif /* _SYSLOG_H */
+#endif /* _BSBPORT_MQTT_H */
