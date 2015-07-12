@@ -38,7 +38,7 @@
 int16_t
 parse_cmd_mq135_ppm(char *cmd, char *output, uint16_t len)
 {
-    ltoa(mq135_ppm, output, 10);
+    ltoa(mq135_getppm(), output, 10);
     return ECMD_FINAL(strlen(output));
 }
 
@@ -47,29 +47,6 @@ uint16_t parse_cmd_mq135_calibrate(char *cmd, char *output, uint16_t len)
     ltoa(mq135_calibrate(), output, 10);
     return ECMD_FINAL(strlen(output));
 }
-
-uint16_t
-parse_cmd_mq135_ro(char *cmd, char *output, uint16_t len)
-{
-  long ret = mq135_getro(mq135_getrs(mq135_adc),MQ135_DEFAULTPPM);
-#ifdef ECMD_MIRROR_REQUEST
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("mq135 ro %d"), ret));
-#else
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), ret));
-#endif
-}
-
-int16_t
-parse_cmd_mq135_rs(char *cmd, char *output, uint16_t len)
-{
-  long ret = mq135_getrs(mq135_adc);
-#ifdef ECMD_MIRROR_REQUEST
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("mq135 ppm %u"), ret));
-#else
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("%u"), ret));
-#endif
-}
-
 
 uint16_t parse_cmd_mq135_defro(char *cmd, char *output, uint16_t len)
 {
@@ -85,14 +62,23 @@ uint16_t parse_cmd_mq135_defro(char *cmd, char *output, uint16_t len)
   }
 }
 
+uint16_t parse_cmd_mq135_readeprom(char *cmd, char *output, uint16_t len)
+{
+    ltoa(mq135_defaultro, output, 10);
+    return ECMD_FINAL(strlen(output));
+}
+
+uint16_t parse_cmd_mq135_writeeprom(char *cmd, char *output, uint16_t len)
+{
+    mq135_writeeep();
+    return ECMD_FINAL_OK;
+}
 /*
   -- Ethersex META --
   block([[MQ135]] commands)
   ecmd_feature(mq135_ppm, "mq135 ppm",, get the ppm concentration)
-#ifndef MQ135_AUTOTUNE_SUPPORT 
   ecmd_feature(mq135_calibrate, "mq135 calibrate",, run calibration of defaultro)
-#endif
-  ecmd_feature(mq135_ro, "mq135 ro",, get the measured ro value)
-  ecmd_feature(mq135_rs, "mq135 rs",, get the measured rs value)
   ecmd_feature(mq135_defro, "mq135 defaultro",, get/set the default ro value)
+  ecmd_feature(mq135_readeprom, "mq135 param read",, read tank parameter from EEPROM)
+  ecmd_feature(mq135_writeeprom, "mq135 param save",, write tank parameter to EEPROM)
 */

@@ -13,11 +13,10 @@ Please refer to LICENSE file for licensing information.
 
 #ifndef _MQ135_H_
 #define _MQ135_H_
+#endif
 
 #ifdef MQ135_SUPPORT
-double mq135_defaultro;
-long mq135_ppm;
-double mq135_adc;
+long mq135_defaultro;
 
 //define sensor resistance at 1000ppm of CH4 in the clean air
 //calibrate your sensor to obtain precise value
@@ -32,17 +31,15 @@ double mq135_adc;
 //look at the datasheet and use the helper to define those values
 #define MQ135_SCALINGFACTOR 116.6020682 //CO2 gas value
 #define MQ135_EXPONENT -2.769034857 //CO2 gas value
-#define MQ135_MAXRSRO 2.428 //for CO2
-#define MQ135_MINRSRO 0.358 //for CO2
-#define MQ135_DEFAULTPPM 392.000 //for CO2
+//#define MQ135_MAXRSRO 2.428 //for CO2
+//#define MQ135_MINRSRO 0.358 //for CO2
+//#define MQ135_DEFAULTPPM 392.000 //for CO2
 
 //functions
-double mq135_getrs(double adc);
-double mq135_getro(double resvalue, double ppm);
-long double mq135_getppm(double resvalue, double ro);
+double mq135_getrs(void);
+long mq135_getro(void);
 long mq135_calibrate(void);
-void mq135_calculation(void);
-void mq135_main(void);
-
-#endif
+long mq135_getppm(void);
+void mq135_readeep(void);
+void mq135_writeeep(void);
 #endif
