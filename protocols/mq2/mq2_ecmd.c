@@ -38,7 +38,7 @@
 int16_t
 parse_cmd_mq2_ppm(char *cmd, char *output, uint16_t len)
 {
-    ltoa(mq2_ppm, output, 10);
+    ltoa(mq2_getppm(), output, 10);
     return ECMD_FINAL(strlen(output));
 }
 
@@ -47,29 +47,6 @@ uint16_t parse_cmd_mq2_calibrate(char *cmd, char *output, uint16_t len)
     ltoa(mq2_calibrate(), output, 10);
     return ECMD_FINAL(strlen(output));
 }
-
-uint16_t
-parse_cmd_mq2_ro(char *cmd, char *output, uint16_t len)
-{
-  long ret = mq2_getro(mq2_getrs(mq2_adc),MQ2_DEFAULTPPM);
-#ifdef ECMD_MIRROR_REQUEST
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("mq2 ro %d"), ret));
-#else
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("%d"), ret));
-#endif
-}
-
-int16_t
-parse_cmd_mq2_rs(char *cmd, char *output, uint16_t len)
-{
-  long ret = mq2_getrs(mq2_adc);
-#ifdef ECMD_MIRROR_REQUEST
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("mq2 ppm %u"), ret));
-#else
-  return ECMD_FINAL(snprintf_P(output, len, PSTR("%u"), ret));
-#endif
-}
-
 
 uint16_t parse_cmd_mq2_defro(char *cmd, char *output, uint16_t len)
 {
@@ -85,14 +62,23 @@ uint16_t parse_cmd_mq2_defro(char *cmd, char *output, uint16_t len)
   }
 }
 
+uint16_t parse_cmd_mq2_readeprom(char *cmd, char *output, uint16_t len)
+{
+    ltoa(mq2_defaultro, output, 10);
+    return ECMD_FINAL(strlen(output));
+}
+
+uint16_t parse_cmd_mq2_writeeprom(char *cmd, char *output, uint16_t len)
+{
+    mq2_writeeep();
+    return ECMD_FINAL_OK;
+}
 /*
   -- Ethersex META --
   block([[MQ2]] commands)
   ecmd_feature(mq2_ppm, "mq2 ppm",, get the ppm concentration)
-#ifndef MQ2_AUTOTUNE_SUPPORT 
   ecmd_feature(mq2_calibrate, "mq2 calibrate",, run calibration of defaultro)
-#endif
-  ecmd_feature(mq2_ro, "mq2 ro",, get the measured ro value)
-  ecmd_feature(mq2_rs, "mq2 rs",, get the measured rs value)
   ecmd_feature(mq2_defro, "mq2 defaultro",, get/set the default ro value)
+  ecmd_feature(mq2_readeprom, "mq2 param read",, read tank parameter from EEPROM)
+  ecmd_feature(mq2_writeeprom, "mq2 param save",, write tank parameter to EEPROM)
 */

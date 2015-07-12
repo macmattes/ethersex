@@ -25,112 +25,64 @@ Please refer to LICENSE file for licensing information.
 /* ----------------------------------------------------------------------------
  *global variables
  */
-double mq2_defaultro;
-double mq2_ro = 0;
-double mq2_res = 0;
-double mq2_adc = 0;
-uint16_t mq2_avg=MQ2_SMOOTHING;
+long mq2_defaultro;
 
-#ifdef MQ2_AUTOTUNE_SUPPORT
-double mq2_res_max;
-#endif
 /*
  * init mq2
  */
 void mq2_init(void) {
-  	eeprom_restore_long(mq2_calibration, &mq2_defaultro);
-	if (mq2_defaultro == 0)
-		mq2_defaultro = MQ2_DEFAULTRO;
+	mq2_readeep();
 }
 
 /*
  * get resistence for given voltage
  */
-double mq2_getrs(double adc) {
-	return ((((long)adc_get_vref * MQ2_BALANCERESISTOR) / adc - MQ2_BALANCERESISTOR));
+double mq2_getrs(void) {
+	return (((adc_get_vref() * MQ2_BALANCERESISTOR) / adc_get_voltage(MQ2_ADCPORT) - MQ2_BALANCERESISTOR));
 }
 
 /*
  * get the calibrated ro based upon read resistance, and a know ppm
  */
-double mq2_getro(double res, double ppm) {
-	return (double)(res * exp( log(MQ2_SCALINGFACTOR/ppm) / MQ2_EXPONENT ));
-}
-
-/*
- * get the ppm concentration
- */
-long double mq2_getppm(double res, double ro) {
-	long double ret = 0;
-	double validinterval = 0;
-	validinterval = res/ro;
-	//if(validinterval<MQ2_MAXRSRO && validinterval>MQ2_MINRSRO) {
-	    ret = (long double)((long)MQ2_SCALINGFACTOR * pow((res/ro), MQ2_EXPONENT));
-	//}
-	return ret;
+long mq2_getro(void) {
+	return (mq2_getrs() * exp( log(MQ2_SCALINGFACTOR/MQ2_DEFAULTPPM) / MQ2_EXPONENT ));
 }
 
 long 
 mq2_calibrate(void)
 {
-    //write to eerom
-    eeprom_save_long(mq2_calibration, mq2_defaultro);
-    eeprom_update_chksum();
-    mq2_defaultro = mq2_ro;
-
-#ifdef MQ2_AUTOTUNE_SUPPORT
-    mq2_res_max = 0;
-#endif
-
+    mq2_defaultro = mq2_getro();
     return mq2_defaultro;
 }
 
-void 
-mq2_calculation(void) {
-		//get res
-		mq2_res = mq2_getrs(mq2_adc);
-
-		//get ro
-		mq2_ro = mq2_getro(mq2_res, MQ2_DEFAULTPPM);
-
-		//convert to ppm (using defaultro) average
-                mq2_ppm = mq2_getppm(mq2_res, mq2_defaultro);
-
-#ifdef MQ2_DEBUG_SUPPORT
-	char printbuff[100];
-		ltoa(mq2_adc, printbuff, 10);
-		debug_printf("adc     : %s \n", printbuff);
-
-		ltoa(mq2_res, printbuff, 10);
-		debug_printf("rs     : %s \n", printbuff);
-
-		ltoa(mq2_ro, printbuff, 10);
-		debug_printf("ro     : %s \n", printbuff);
-
-		ltoa(mq2_defaultro, printbuff, 10);
-		debug_printf("defaultro     : %s \n", printbuff);
-
-		ltoa((int32_t)mq2_ppm, printbuff, 10);
-		debug_printf("ppm     : %s \n", printbuff);
-#endif
-#ifdef MQ2_AUTOTUNE_SUPPORT
-		if ( mq2_res > mq2_res_max ) {
-			mq2_calibrate();
-			mq2_res_max=mq2_res;
-		}
-#endif
+/*
+ * get the ppm concentration
+ */
+long mq2_getppm() {
+	return (MQ2_SCALINGFACTOR * pow((mq2_getrs()/mq2_defaultro), MQ2_EXPONENT));
 }
 
-void 
-mq2_main(void) {
-	//get adc average
-	mq2_adc = (mq2_avg*mq2_adc+adc_get_voltage(MQ2_ADCPORT))/(mq2_avg+1);
+
+/*
+ * set / get the params
+ */
+void
+mq2_readeep(void)
+{
+    //read from eeprom
+    eeprom_restore_long(mq2_calibration, &mq2_defaultro);
 }
+void
+mq2_writeeep(void)
+{
+    //write to eeprom
+    eeprom_save_long(mq2_calibration, mq2_defaultro);
+    eeprom_update_chksum();
+}
+
 #endif
 
 /*
   -- Ethersex META --
   init(mq2_init)
-  timer(50, mq2_calculation())
-  mainloop(mq2_main)
 */

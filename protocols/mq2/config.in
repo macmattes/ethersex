@@ -1,10 +1,9 @@
 dep_bool_menu  "MQ2 Combustible Gas Sensor Support" MQ2_SUPPORT $ADC_SUPPORT $ARCH_AVR
   if [ "$MQ2_SUPPORT" = "y" ]; then
-	int "Analoginput for MQ2" MQ2_ADCPORT 6
+	int "Analoginput for MQ2" MQ2_ADCPORT 0
+        int "default ppm of CH4 for calibration" MQ2_DEFAULTPPM 0
         int "default Ro for 0-1 ppm of CH4" MQ2_DEFAULTRO 20000
         int "BalanceResistor for Rs" MQ2_BALANCERESISTOR 1000
-        int "smoothing of adc and ppm" MQ2_SMOOTHING 3
-   dep_bool "Autotune to 0 ppm" MQ2_AUTOTUNE_SUPPORT
     comment "-------------------------"
    dep_bool "MQ2 Debug" MQ2_DEBUG_SUPPORT
   fi
