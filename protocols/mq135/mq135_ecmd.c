@@ -29,26 +29,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "core/eeprom.h"
 #include "config.h"
 #include "mq135.h"
 #include "protocols/ecmd/ecmd-base.h"
 
 
-int16_t
+uint16_t
 parse_cmd_mq135_ppm(char *cmd, char *output, uint16_t len)
 {
     ltoa(mq135_getppm(), output, 10);
     return ECMD_FINAL(strlen(output));
 }
 
-uint16_t parse_cmd_mq135_calibrate(char *cmd, char *output, uint16_t len)
+uint16_t 
+parse_cmd_mq135_calibrate(char *cmd, char *output, uint16_t len)
 {
     ltoa(mq135_calibrate(), output, 10);
     return ECMD_FINAL(strlen(output));
 }
 
-uint16_t parse_cmd_mq135_defro(char *cmd, char *output, uint16_t len)
+uint16_t 
+parse_cmd_mq135_defro(char *cmd, char *output, uint16_t len)
 {
   if (cmd[0])
   {
@@ -62,15 +64,18 @@ uint16_t parse_cmd_mq135_defro(char *cmd, char *output, uint16_t len)
   }
 }
 
-uint16_t parse_cmd_mq135_readeprom(char *cmd, char *output, uint16_t len)
+uint16_t 
+parse_cmd_mq135_readeprom(char *cmd, char *output, uint16_t len)
 {
     ltoa(mq135_defaultro, output, 10);
     return ECMD_FINAL(strlen(output));
 }
 
-uint16_t parse_cmd_mq135_writeeprom(char *cmd, char *output, uint16_t len)
+uint16_t 
+parse_cmd_mq135_writeeprom(char *cmd, char *output, uint16_t len)
 {
-    mq135_writeeep();
+    eeprom_save_long(mq135_calibration, mq135_defaultro);
+    eeprom_update_chksum();
     return ECMD_FINAL_OK;
 }
 /*

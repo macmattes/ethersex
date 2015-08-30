@@ -36,10 +36,9 @@ long mq135_defaultro;
 //#define MQ135_DEFAULTPPM 392.000 //for CO2
 
 //functions
-double mq135_getrs(void);
+long mq135_getrs(void);
 long mq135_getro(void);
 long mq135_calibrate(void);
 long mq135_getppm(void);
 void mq135_readeep(void);
-void mq135_writeeep(void);
 #endif

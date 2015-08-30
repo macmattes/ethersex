@@ -13,9 +13,6 @@ Please refer to LICENSE file for licensing information.
 #include "core/bit-macros.h"
 #include "core/debug.h"
 #include "core/eeprom.h"
-#include "core/periodic.h"
-#include <util/delay.h>
-//#include "services/clock/clock.h"
 #include <math.h> //include libm
 #include "hardware/adc/adc.h"
 #include "protocols/ecmd/ecmd-base.h"
@@ -30,22 +27,25 @@ long mq135_defaultro;
 /*
  * init mq135
  */
-void mq135_init(void) {
+void 
+mq135_init(void) {
 	mq135_readeep();
 }
 
 /*
  * get resistence for given voltage
  */
-double mq135_getrs(void) {
-	return (((adc_get_vref() * MQ135_BALANCERESISTOR) / adc_get_voltage(MQ135_ADCPORT) - MQ135_BALANCERESISTOR));
+long 
+mq135_getrs(void) {
+	return ((((long)adc_get_vref() * MQ135_BALANCERESISTOR) / (long)adc_get_voltage(MQ135_ADCPORT) - MQ135_BALANCERESISTOR));
 }
 
 /*
  * get the calibrated ro based upon read resistance, and a know ppm
  */
-long mq135_getro(void) {
-	return (mq135_getrs() * exp( log(MQ135_SCALINGFACTOR/MQ135_DEFAULTPPM) / MQ135_EXPONENT ));
+long 
+mq135_getro(void) {
+	return ((float)mq135_getrs() * exp( log(MQ135_SCALINGFACTOR/MQ135_DEFAULTPPM) / MQ135_EXPONENT ));
 }
 
 long 
@@ -58,8 +58,10 @@ mq135_calibrate(void)
 /*
  * get the ppm concentration
  */
-long mq135_getppm() {
-	return (MQ135_SCALINGFACTOR * pow((mq135_getrs()/mq135_defaultro), MQ135_EXPONENT));
+long 
+mq135_getppm() {
+	long val = (MQ135_SCALINGFACTOR * pow(((float)mq135_getrs()/mq135_defaultro), MQ135_EXPONENT));
+	return val;
 }
 
 
@@ -72,13 +74,7 @@ mq135_readeep(void)
     //read from eeprom
     eeprom_restore_long(mq135_calibration, &mq135_defaultro);
 }
-void
-mq135_writeeep(void)
-{
-    //write to eeprom
-    eeprom_save_long(mq135_calibration, mq135_defaultro);
-    eeprom_update_chksum();
-}
+
 
 #endif
 
