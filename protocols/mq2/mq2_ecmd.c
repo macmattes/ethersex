@@ -29,26 +29,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "core/eeprom.h"
 #include "config.h"
 #include "mq2.h"
 #include "protocols/ecmd/ecmd-base.h"
 
 
-int16_t
+uint16_t
 parse_cmd_mq2_ppm(char *cmd, char *output, uint16_t len)
 {
     ltoa(mq2_getppm(), output, 10);
     return ECMD_FINAL(strlen(output));
 }
 
-uint16_t parse_cmd_mq2_calibrate(char *cmd, char *output, uint16_t len)
+uint16_t 
+parse_cmd_mq2_calibrate(char *cmd, char *output, uint16_t len)
 {
     ltoa(mq2_calibrate(), output, 10);
     return ECMD_FINAL(strlen(output));
 }
 
-uint16_t parse_cmd_mq2_defro(char *cmd, char *output, uint16_t len)
+uint16_t 
+parse_cmd_mq2_defro(char *cmd, char *output, uint16_t len)
 {
   if (cmd[0])
   {
@@ -62,15 +64,18 @@ uint16_t parse_cmd_mq2_defro(char *cmd, char *output, uint16_t len)
   }
 }
 
-uint16_t parse_cmd_mq2_readeprom(char *cmd, char *output, uint16_t len)
+uint16_t 
+parse_cmd_mq2_readeprom(char *cmd, char *output, uint16_t len)
 {
     ltoa(mq2_defaultro, output, 10);
     return ECMD_FINAL(strlen(output));
 }
 
-uint16_t parse_cmd_mq2_writeeprom(char *cmd, char *output, uint16_t len)
+uint16_t 
+parse_cmd_mq2_writeeprom(char *cmd, char *output, uint16_t len)
 {
-    mq2_writeeep();
+    eeprom_save_long(mq2_calibration, mq2_defaultro);
+    eeprom_update_chksum();
     return ECMD_FINAL_OK;
 }
 /*
@@ -79,6 +84,6 @@ uint16_t parse_cmd_mq2_writeeprom(char *cmd, char *output, uint16_t len)
   ecmd_feature(mq2_ppm, "mq2 ppm",, get the ppm concentration)
   ecmd_feature(mq2_calibrate, "mq2 calibrate",, run calibration of defaultro)
   ecmd_feature(mq2_defro, "mq2 defaultro",, get/set the default ro value)
-  ecmd_feature(mq2_readeprom, "mq2 param read",, read tank parameter from EEPROM)
-  ecmd_feature(mq2_writeeprom, "mq2 param save",, write tank parameter to EEPROM)
+  ecmd_feature(mq2_readeprom, "mq2 param read",, read parameter from EEPROM)
+  ecmd_feature(mq2_writeeprom, "mq2 param save",, write parameter to EEPROM)
 */

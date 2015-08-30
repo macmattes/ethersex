@@ -31,12 +31,14 @@ long mq2_defaultro;
 //look at the datasheet and use the helper to define those values
 #define MQ2_SCALINGFACTOR 3900 //CH4 gas value
 #define MQ2_EXPONENT -2.7 //CH4 gas value
+//#define MQ2_MAXRSRO 2.428 //for CH4
+//#define MQ2_MINRSRO 0.358 //for CH4
+//#define MQ2_DEFAULTPPM 0.000 //for CH4
 
 //functions
-double mq2_getrs(void);
+long mq2_getrs(void);
 long mq2_getro(void);
 long mq2_calibrate(void);
 long mq2_getppm(void);
 void mq2_readeep(void);
-void mq2_writeeep(void);
 #endif
