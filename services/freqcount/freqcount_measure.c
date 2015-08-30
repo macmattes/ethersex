@@ -141,8 +141,7 @@ static void start_measure(void)
 
     // clear timer interrupt capture flag by writing a 1:
     // required after changing the trigger direction
-    //TIFR1 = _BV(ICF1);
-    TIFR = _BV(ICF1);
+    TIFR1 = _BV(ICF1);
 
     // disable the noise canceler
     TCCR1B &= ~(_BV(ICNC1));
@@ -152,15 +151,13 @@ static void start_measure(void)
     ACSR &= ~(_BV(ACIC));
     
     // enable timer input capture interrupt
-    //TIMSK1 |= _BV(ICIE1);
-    TIMSK |= _BV(TICIE1);
+    TIMSK1 |= _BV(ICIE1);
 }
 
 static freqcount_average_state_t measure_done(void)
 {
     // disable timer input capture interrupt
-    //TIMSK1 &= ~(_BV(ICIE1));
-    TIMSK &= ~(_BV(TICIE1));
+    TIMSK1 &= ~(_BV(ICIE1));
     freqcount_state=FC_DISABLED;
     
     // convert from 24 bit to 32 to do the math
@@ -230,8 +227,7 @@ static uint8_t check_measure_timeout(void)
         // -> we can't get reliable data anymore
 
         // disable timer input capture interrupt
-        //TIMSK1 &= ~(_BV(ICIE1));
-        TIMSK &= ~(_BV(TICIE1));
+        TIMSK1 &= ~(_BV(ICIE1));
 
         freqcount_state=FC_DISABLED;
         
@@ -274,8 +270,7 @@ ISR(TIMER1_CAPT_vect)
         
         // clear timer interrupt capture flag by writing a 1:
         // required after changing the trigger direction
-        //TIFR1 = _BV(ICF1);
-        TIFR = _BV(ICF1);
+        TIFR1 = _BV(ICF1);
         
         freqcount_state=FC_ON_CYCLE;
     }
