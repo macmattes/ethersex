@@ -1,0 +1,42 @@
+##
+#   Named Pin Configuration File
+#
+# You can assign names to your microcontroller's pins here.
+# Keep in mind that this names must consist of alphanumeric 
+# characters only!
+#
+# Every line starting with a hash sign (#) is a comment.
+#
+#
+# PIN | IN/OUT | When active? | Name
+#-----+--------+--------------+----------------
+##############
+#dsub25
+#PC0	I2C SCL 
+#PC1	I2C SDA
+PC2	OUTPUT	 LOW		Ausgang1
+PC3	OUTPUT	 LOW		Ausgang2
+PC4	OUTPUT	 LOW		Ausgang3
+PC5	OUTPUT	 LOW		Ausgang4
+#PC6	DHT1
+#PC7	DHT2
+#PA0	DHT3
+#PA1	DHT4
+PA2 	INPUT    LOW           Eingang1
+PA3	INPUT    LOW           Eingang2
+##############
+#ext-port
+#PD2	RXD1
+#PD3	TXD1
+#PD4    ZBUS
+PD5	INPUT	 LOW		Eingang3
+#PD6	FreqCounter
+#PD7	74HC251_DS_A
+#PB0	74HC251_DS_B
+#PB3	74HC251_DS_C
+###############
+#schraubklemmen
+#PA4	MQ2	
+#PA5	Pressure 
+#PA6	DHT0
+#PA7	1W
