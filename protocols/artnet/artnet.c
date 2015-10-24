@@ -271,7 +271,7 @@ artnet_main(void)
       DMX_NEWVALUES && artnet_connected == TRUE)
   {
     ARTNET_DEBUG("Universe has changed, sending artnet data!\r\n");
-    //artnet_sendDmxPacket();
+    artnet_sendDmxPacket();
   }
 }
 
@@ -316,11 +316,7 @@ artnet_get(void)
         if (artnet_dmxDirection == 0)
         {
           uint16_t len = ((dmx->lengthHi << 8) + dmx->length);
-<<<<<<< HEAD
-          set_dmx_channels(&dmx->dataStart, artnet_inputUniverse, len);
-=======
           set_dmx_channels((const uint8_t *)&dmx->dataStart, artnet_outputUniverse, 0, len);
->>>>>>> ethersex/master
           if (artnet_sendPollReplyOnChange == TRUE)
           {
             artnet_pollReplyCounter++;
