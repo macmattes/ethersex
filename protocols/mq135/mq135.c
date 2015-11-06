@@ -69,6 +69,13 @@ mq135_getppm() {
  * set / get the params
  */
 void
+mq135_writeeep(void)
+{
+    //write to eeprom
+    eeprom_save_long(mq135_calibration, mq135_defaultro);
+    eeprom_update_chksum();
+}
+void
 mq135_readeep(void)
 {
     //read from eeprom

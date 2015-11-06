@@ -67,15 +67,14 @@ parse_cmd_mq135_defro(char *cmd, char *output, uint16_t len)
 uint16_t 
 parse_cmd_mq135_readeprom(char *cmd, char *output, uint16_t len)
 {
-    ltoa(mq135_defaultro, output, 10);
-    return ECMD_FINAL(strlen(output));
+    mq135_readeep();
+    return ECMD_FINAL_OK;
 }
 
 uint16_t 
 parse_cmd_mq135_writeeprom(char *cmd, char *output, uint16_t len)
 {
-    eeprom_save_long(mq135_calibration, mq135_defaultro);
-    eeprom_update_chksum();
+    mq135_writeeep;
     return ECMD_FINAL_OK;
 }
 /*

@@ -40,5 +40,6 @@ long mq135_getrs(void);
 long mq135_getro(void);
 long mq135_calibrate(void);
 long mq135_getppm(void);
+void mq135_writeeep(void);
 void mq135_readeep(void);
 #endif
