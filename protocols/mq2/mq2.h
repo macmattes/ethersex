@@ -40,5 +40,6 @@ long mq2_getrs(void);
 long mq2_getro(void);
 long mq2_calibrate(void);
 long mq2_getppm(void);
+void mq2_writeeep(void);
 void mq2_readeep(void);
 #endif

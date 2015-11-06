@@ -67,15 +67,14 @@ parse_cmd_mq2_defro(char *cmd, char *output, uint16_t len)
 uint16_t 
 parse_cmd_mq2_readeprom(char *cmd, char *output, uint16_t len)
 {
-    ltoa(mq2_defaultro, output, 10);
-    return ECMD_FINAL(strlen(output));
+    mq2_readeep();
+    return ECMD_FINAL_OK;
 }
 
 uint16_t 
 parse_cmd_mq2_writeeprom(char *cmd, char *output, uint16_t len)
 {
-    eeprom_save_long(mq2_calibration, mq2_defaultro);
-    eeprom_update_chksum();
+    mq2_writeeep;
     return ECMD_FINAL_OK;
 }
 /*

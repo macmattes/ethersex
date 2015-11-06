@@ -69,6 +69,14 @@ mq2_getppm() {
  * set / get the params
  */
 void
+mq2_writeeep(void)
+{
+    //write to eeprom
+    eeprom_save_long(mq2_calibration, mq2_defaultro);
+    eeprom_update_chksum();
+}
+void
+void
 mq2_readeep(void)
 {
     //read from eeprom
