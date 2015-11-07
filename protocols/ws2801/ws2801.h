@@ -43,7 +43,6 @@ uint16_t ws2801_colortemp;
 uint8_t ws2801_artnet_state;
 uint8_t ws2801_pixels;
 uint16_t ws2801_channels;
-uint8_t ws2801_dimmer;
 
 #ifdef DEBUG_WS2801
 #include "core/debug.h"
@@ -215,6 +214,8 @@ struct ws2801_dmx
   uint8_t length;
   uint8_t dataStart[];
 };
+
+uint8_t ws2801_state, ws2801_r, ws2801_g, ws2801_b;
 
 void ws2801_set_artnet_state(uint8_t val);
 void ws2801_init(void);
