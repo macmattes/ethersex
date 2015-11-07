@@ -216,8 +216,7 @@ struct ws2801_dmx
 };
 
 uint8_t ws2801_state, ws2801_r, ws2801_g, ws2801_b;
-
-void ws2801_set_artnet_state(uint8_t val);
+;
 void ws2801_init(void);
 void ws2801_sendPollReply(void);
 void ws2801_main(void);

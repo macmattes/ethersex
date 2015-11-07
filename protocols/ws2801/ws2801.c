@@ -275,6 +275,7 @@ ws2801_get(void)
 
 void ws2801_setColor(uint8_t r, uint8_t g, uint8_t b)
 {
+  if (ws2801_artnet_state == 0) {
 	uint16_t dmxpx;
 	for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
 	{
@@ -288,18 +289,22 @@ void ws2801_setColor(uint8_t r, uint8_t g, uint8_t b)
 	ws2801_r = r;
 	ws2801_g = g;
 	ws2801_b = b;
+  }
 }
 
 void ws2801_setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b)
 {
+  if (ws2801_artnet_state == 0) {
 	ws2801_dmxUniverse[(n*3)+0] = r;
 	ws2801_dmxUniverse[(n*3)+1] = g;
 	ws2801_dmxUniverse[(n*3)+2] = b;
     	ws2801_show_storage();
+  }
 }
 
 void ws2801_setColorTemp(uint16_t k)
 {
+  if (ws2801_artnet_state == 0) {
     float Temperature,Red,Green,Blue;
     Temperature = k / 100;
     
@@ -360,6 +365,7 @@ void ws2801_setColorTemp(uint16_t k)
 
     }
     ws2801_setColor(Red,Green,Blue);
+  }
 }
 
 void hsv_to_rgb(unsigned char h, unsigned char s, unsigned char v)
@@ -437,10 +443,6 @@ void ws2801_showPixel(void) {
     // when we're done we hold the clock pin low for a millisecond to latch it
     PIN_CLEAR(WS2801_CLOCK); // set clock LOW
     _delay_us(500); // wait for 500uS to display frame on ws2801
-}
-
-void ws2801_set_artnet_state (uint8_t val) {
-	ws2801_artnet_state = val;
 }
 
 #endif /* WS2801_SUPPORT */
