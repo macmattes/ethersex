@@ -63,21 +63,6 @@ int16_t parse_cmd_ws2801_artnet_state(char *cmd, char *output, uint16_t len)
   }
 }
 
-int16_t parse_cmd_ws2801_dimmer(char *cmd, char *output, uint16_t len)
-{
-  if (cmd[0])
-  {
-    ws2801_dimmer = atoi(cmd);
-    ws2801_show_storage();
-    return ECMD_FINAL_OK;
-  }
-  else
-  {
-    itoa(ws2801_dimmer, output, 10);
-    return ECMD_FINAL(strlen(output));
-  }
-}
-
 int16_t parse_cmd_ws2801_settemp(char *cmd, char *output, uint16_t len)
 {
   uint16_t ret=0, k=0;
@@ -130,7 +115,6 @@ int16_t parse_cmd_ws2801_set_pixels_rgb(char *cmd, char *output, uint16_t len)
   block([[WS2801]] commands)
   ecmd_feature(ws2801_universe, "ws2801 artnet universe",UNIVERSE, set/get Universe to show)
   ecmd_feature(ws2801_artnet_state, "ws2801 artnet state",ARTNETSTATE, set/get ARTNET State)
-  ecmd_feature(ws2801_dimmer, "ws2801 dim",, set/get dimmer value)
   ecmd_feature(ws2801_settemp, "ws2801 colortemp",Temperature, set/get Color Temperature)
   ecmd_feature(ws2801_set_pixel_rgb, "ws2801 rgb", PIXEL R G B, Set one pixel with rgb values)
   ecmd_feature(ws2801_set_pixels_rgb, "ws2801 rgball",R G B, Set all pixels with rgb values) 
