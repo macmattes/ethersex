@@ -216,7 +216,7 @@ struct ws2801_dmx
 };
 
 uint8_t ws2801_state, ws2801_r, ws2801_g, ws2801_b;
-;
+
 void ws2801_init(void);
 void ws2801_sendPollReply(void);
 void ws2801_main(void);
@@ -228,6 +228,7 @@ void ws2801_show_storage(void);
 void ws2801_writeByte(unsigned char Send);
 void ws2801_showPixel(void);
 void ws2801_setColorTemp(uint16_t k);
+void ws2801_set_artnet_state(uint8_t val);
 
 #endif /* _WS2801_H */
 #endif /* WS2801_SUPPORT */
