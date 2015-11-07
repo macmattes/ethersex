@@ -406,7 +406,6 @@ switch( i )
 
 void ws2801_show_storage(void)
 {
-	ws2801_state = 0;
 	uint16_t dmxch;
 	for(dmxch = 0; dmxch < ws2801_channels; dmxch++)
 	{
