@@ -229,6 +229,7 @@ void ws2801_writeByte(unsigned char Send);
 void ws2801_showPixel(void);
 void ws2801_setColorTemp(uint16_t k);
 void ws2801_set_artnet_state(uint8_t val);
+void ws2801_toggle_artnet_state(void);
 
 #endif /* _WS2801_H */
 #endif /* WS2801_SUPPORT */

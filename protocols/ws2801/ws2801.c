@@ -276,6 +276,7 @@ ws2801_get(void)
 void ws2801_setColor(uint8_t r, uint8_t g, uint8_t b)
 {
   if (ws2801_artnet_state == 0) {
+	ws2801_state = 1;
 	uint16_t dmxpx;
 	for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
 	{
@@ -295,6 +296,7 @@ void ws2801_setColor(uint8_t r, uint8_t g, uint8_t b)
 void ws2801_setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b)
 {
   if (ws2801_artnet_state == 0) {
+	ws2801_state = 1;
 	ws2801_dmxUniverse[(n*3)+0] = r;
 	ws2801_dmxUniverse[(n*3)+1] = g;
 	ws2801_dmxUniverse[(n*3)+2] = b;
@@ -305,6 +307,7 @@ void ws2801_setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b)
 void ws2801_setColorTemp(uint16_t k)
 {
   if (ws2801_artnet_state == 0) {
+	ws2801_state = 1;
     float Temperature,Red,Green,Blue;
     Temperature = k / 100;
     
@@ -408,9 +411,6 @@ void ws2801_show_storage(void)
 	for(dmxch = 0; dmxch < ws2801_channels; dmxch++)
 	{
 		ws2801_writeByte(ws2801_dmxUniverse[dmxch]);
-		if (ws2801_dmxUniverse[dmxch] > ws2801_state) {
-			ws2801_state = ws2801_dmxUniverse[dmxch];
-		}
 	}
     
     	if (dmxch == ws2801_channels) {
@@ -449,6 +449,17 @@ void ws2801_set_artnet_state (uint8_t val) {
 	ws2801_artnet_state = val;
 	if (val == 0) {
 		ws2801_setColor(0,0,0);
+	} else {
+		ws2801_state = 0;
+	}
+}
+
+void ws2801_toggle_artnet_state (void) {
+	ws2801_artnet_state ^= 1;
+	if (ws2801_artnet_state == 0) {
+		ws2801_setColor(0,0,0);
+	} else {
+		ws2801_state = 0;
 	}
 }
 
