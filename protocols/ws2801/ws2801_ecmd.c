@@ -80,29 +80,14 @@ int16_t parse_cmd_ws2801_settemp(char *cmd, char *output, uint16_t len)
   }
 }
 
-int16_t parse_cmd_ws2801_set_pixel_rgb(char *cmd, char *output, uint16_t len)
-{
-    uint8_t ret=0, pixel=0, r=0, g=0, b=0;
-    ret = sscanf_P(cmd, PSTR("%hhu %hhu %hhu %hhu"), &pixel, &r, &g, &b);
-    if(ret == 4)
-	{
-	if (pixel >= 170)
-            return ECMD_ERR_PARSE_ERROR;
-        ws2801_artnet_state = 0; //disable artnet
-        ws2801_setPixelColor(pixel, r, g, b);
-        return ECMD_FINAL_OK;
-    }
-    else
-	return ECMD_ERR_PARSE_ERROR;    
-}
-
-int16_t parse_cmd_ws2801_set_pixels_rgb(char *cmd, char *output, uint16_t len)
+int16_t parse_cmd_ws2801_set_rgb(char *cmd, char *output, uint16_t len)
 {
     uint8_t ret=0, r=0, g=0, b=0;
     ret = sscanf_P(cmd, PSTR("%hhu %hhu %hhu"), &r, &g, &b);
     if(ret == 3)
 	{
         ws2801_setColor( r, g, b);
+	ws2801_WriteColor();
         return ECMD_FINAL_OK;
     }
     else
@@ -116,6 +101,5 @@ int16_t parse_cmd_ws2801_set_pixels_rgb(char *cmd, char *output, uint16_t len)
   ecmd_feature(ws2801_universe, "ws2801 artnet universe",UNIVERSE, set/get Universe to show)
   ecmd_feature(ws2801_artnet_state, "ws2801 artnet state",ARTNETSTATE, set/get ARTNET State)
   ecmd_feature(ws2801_settemp, "ws2801 colortemp",Temperature, set/get Color Temperature)
-  ecmd_feature(ws2801_set_pixel_rgb, "ws2801 rgb", PIXEL R G B, Set one pixel with rgb values)
-  ecmd_feature(ws2801_set_pixels_rgb, "ws2801 rgball",R G B, Set all pixels with rgb values) 
+  ecmd_feature(ws2801_set_rgb, "ws2801 rgb",R G B, Set all pixels with rgb values) 
 */

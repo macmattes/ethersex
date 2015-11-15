@@ -55,7 +55,7 @@
 
 uint8_t ws2801_subNet = SUBNET_DEFAULT;
 uint8_t ws2801_outputUniverse;
-uint16_t ws2801_colortemp;
+uint16_t ws2801_colortemp = 2600;
 uint8_t ws2801_sendPollReplyOnChange = TRUE;
 uip_ipaddr_t ws2801_pollReplyTarget;
 uint32_t ws2801_pollReplyCounter = 0;
@@ -73,6 +73,12 @@ uint16_t ws2801_channels = CONF_WS2801_PIXELS*3;
 
 const char ws2801_ID[8] PROGMEM = "Art-Net";
 uint8_t ws2801_artnet_state = 0;
+
+const uint16_t pwmtable_8D[32] PROGMEM =
+{
+    0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23,
+    27, 32, 38, 45, 54, 64, 76, 91, 108, 128, 152, 181, 215, 255
+};
 
 /* ----------------------------------------------------------------------------
  * initialization of network settings
@@ -275,39 +281,14 @@ ws2801_get(void)
 
 void ws2801_setColor(uint8_t r, uint8_t g, uint8_t b)
 {
-  if (ws2801_artnet_state == 0) {
-	ws2801_state = 1;
-	uint16_t dmxpx;
-	for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
-	{
-		ws2801_dmxUniverse[(dmxpx*3)+0] = r;
-		ws2801_dmxUniverse[(dmxpx*3)+1] = g;
-		ws2801_dmxUniverse[(dmxpx*3)+2] = b;
-	}
-    	if (dmxpx == ws2801_pixels) {
-    		ws2801_show_storage();
-    	}
 	ws2801_r = r;
 	ws2801_g = g;
 	ws2801_b = b;
-  }
-}
-
-void ws2801_setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b)
-{
-  if (ws2801_artnet_state == 0) {
-	ws2801_state = 1;
-	ws2801_dmxUniverse[(n*3)+0] = r;
-	ws2801_dmxUniverse[(n*3)+1] = g;
-	ws2801_dmxUniverse[(n*3)+2] = b;
-    	ws2801_show_storage();
-  }
 }
 
 void ws2801_setColorTemp(uint16_t k)
 {
   if (ws2801_artnet_state == 0) {
-	ws2801_state = 1;
     float Temperature,Red,Green,Blue;
     Temperature = k / 100;
     
@@ -371,36 +352,132 @@ void ws2801_setColorTemp(uint16_t k)
   }
 }
 
-void hsv_to_rgb(unsigned char h, unsigned char s, unsigned char v)
- {
- unsigned char r,g,b, i, f;
- unsigned int p, q, t;
- 
-if( s == 0 )
-   { r = g = b = v;
- }
- else
- { i=h/43;
- f=h%43;
- p = (v * (255 - s))/256;
- q = (v * ((10710 - (s * f))/42))/256;
- t = (v * ((10710 - (s * (42 - f)))/42))/256;
- 
-switch( i )
- 	{ case 0:
- 	r = v; g = t; b = p; break;
- 	case 1:
- 	r = q; g = v; b = p; break;
- 	case 2:
- 	r = p; g = v; b = t; break;
- 	case 3:
- 	r = p; g = q; b = v; break;
- 	case 4:
- 	r = t; g = p; b = v; break;
- 	case 5:
- 	r = v; g = p; b = q; break;
- 	}
- }
+void ws2801_Clear(void)
+{
+  if (ws2801_artnet_state == 0) {
+	uint16_t dmxpx;
+	for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
+	{
+		ws2801_dmxUniverse[(dmxpx*3)+0] = 0;
+		ws2801_dmxUniverse[(dmxpx*3)+1] = 0;
+		ws2801_dmxUniverse[(dmxpx*3)+2] = 0;
+	}
+    	if (dmxpx == ws2801_pixels) {
+    		ws2801_show_storage();
+		ws2801_state = 0;
+    	}
+  }
+}
+
+void ws2801_WriteColor(void)
+{
+  if (ws2801_artnet_state == 0) {
+	uint16_t dmxpx;
+	for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
+	{
+		ws2801_dmxUniverse[(dmxpx*3)+0] = ws2801_r;
+		ws2801_dmxUniverse[(dmxpx*3)+1] = ws2801_g;
+		ws2801_dmxUniverse[(dmxpx*3)+2] = ws2801_b;
+	}
+    	if (dmxpx == ws2801_pixels) {
+    		ws2801_show_storage();
+		ws2801_state = 1;
+    	}
+  }
+}
+
+void ws2801_Dim(uint8_t dim)
+{ 
+   ws2801_dim_state = dim;
+	if (ws2801_artnet_state == 0) {
+		if (ws2801_dim_state == 0) {
+	  		ws2801_Clear();
+		} else {
+			double r,g,b,H,S,V;
+			rgb_to_hsv(ws2801_r,ws2801_g,ws2801_b,&H,&S,&V);
+			printf("HSV: %d %d %d\n",(uint8_t)H,(uint8_t)S,(uint8_t)V);
+			hsv_to_rgb(H,S,pgm_read_word (& pwmtable_8D[ws2801_dim_state]),&r,&g,&b);
+			printf("rgb: %d %d %d\n",(uint8_t)r,(uint8_t)g,(uint8_t)b);
+
+			uint16_t dmxpx;
+			for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
+			{
+				ws2801_dmxUniverse[(dmxpx*3)+0] = (uint8_t) r;
+				ws2801_dmxUniverse[(dmxpx*3)+1] = (uint8_t) g;
+				ws2801_dmxUniverse[(dmxpx*3)+2] = (uint8_t) b;
+			}
+		    	if (dmxpx == ws2801_pixels) {
+		    		ws2801_show_storage();
+				ws2801_state = 1;
+		    	}
+		}
+	  }
+}
+
+void
+hsv_to_rgb(double h, double s, double v, double *R, double *G, double *B)
+{
+    int segment;
+    double *rgb[3], major, minor, middle, frac;
+
+    rgb[0] = R;
+    rgb[1] = G;
+    rgb[2] = B;
+
+    while (h < 0)
+	h++;
+    while (h >= 1)
+	h--;
+
+    segment = (int)(h*6);
+
+    frac = (6*h)-segment;
+    if (segment % 2)
+	frac = 1 - frac;
+
+    major = v;
+    minor = (1-s)*v;
+    middle = frac * major + (1-frac) * minor;
+
+    *rgb[(segment+1)/2 % 3] = major;
+    *rgb[(segment+4)/2 % 3] = minor;
+    *rgb[(7-segment) % 3] = middle;
+}
+
+#define swap(a,b) (temp = (a), (a) = (b), (b) = temp)
+#define rshift(a,b,c) (temp = (c), (c) = (b), (b) = (a), (a) = temp)
+void
+rgb_to_hsv(double r, double g, double b, double *H, double *S, double *V)
+{
+    int segment;
+    double *rgb[3], *temp, frac;
+
+    rgb[0] = &r;
+    rgb[1] = &g;
+    rgb[2] = &b;
+
+    /* sort rgb into increasing order */
+
+    if (*rgb[0] > *rgb[1])
+	swap(rgb[0], rgb[1]);
+    if (*rgb[1] > *rgb[2])
+	if (*rgb[0] > *rgb[2])
+	    rshift(rgb[0], rgb[1], rgb[2]);
+	else
+	    swap(rgb[1], rgb[2]);
+
+    if (*V = *rgb[2])
+	if (*S = 1 - *rgb[0] / *rgb[2]) {
+	    /* segment = 3*(b>g) + 2 * (rgb[1]==&b) + (rgb[1]==&r); */
+	    segment = 3 * (rgb[0]==&g||rgb[2]==&b)
+		    + 2 * (rgb[1]==&b) + (rgb[1]==&r);
+	    frac = (*rgb[1] - *rgb[0]) / (*rgb[2] - *rgb[0]);
+	    if (segment % 2)
+		frac = 1 - frac;
+	    *H = (segment + frac) / 6;
+	    if (*H >= 1)
+		--*H;
+	}
 }
 //Datenausgabe
 
@@ -444,21 +521,42 @@ void ws2801_showPixel(void) {
     _delay_us(500); // wait for 500uS to display frame on ws2801
 }
 
-void ws2801_set_artnet_state (uint8_t val) {
-	ws2801_artnet_state = val;
-	if (val == 0) {
-		ws2801_setColor(0,0,0);
+void ws2801_set_state (uint8_t val) {
+	if (ws2801_artnet_state == 0) {
+		ws2801_state = val;
+		//ws2801_setColor(ws2801_state*ws2801_r,ws2801_state*ws2801_g,ws2801_state*ws2801_b);
+		if (ws2801_state == 0) {
+			ws2801_Clear();
+		} else {
+			ws2801_WriteColor();
+		}
 	} else {
 		ws2801_state = 0;
 	}
 }
 
+void ws2801_toggle_state (void) {
+	if (ws2801_artnet_state == 0) {
+		ws2801_state ^= 1;
+		ws2801_setColor(ws2801_state*ws2801_r,ws2801_state*ws2801_g,ws2801_state*ws2801_b);
+	}
+}
+
+void ws2801_set_artnet_state (uint8_t val) {
+	ws2801_artnet_state = val;
+	if (ws2801_artnet_state == 1) {
+		ws2801_state = 0;
+	} else {
+		ws2801_Clear();
+	}
+}
+
 void ws2801_toggle_artnet_state (void) {
 	ws2801_artnet_state ^= 1;
-	if (ws2801_artnet_state == 0) {
-		ws2801_setColor(0,0,0);
-	} else {
+	if (ws2801_artnet_state == 1) {
 		ws2801_state = 0;
+	} else {
+		ws2801_Clear();
 	}
 }
 
