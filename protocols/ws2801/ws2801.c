@@ -130,6 +130,9 @@ ws2801_init(void)
   ws2801_artnet_state = 1;
 #endif
 
+  /* set startcolor */
+  ws2801_setColorTemp(ws2801_colortemp);
+
   WS2801_DEBUG("init complete\n");
   return;
 }
