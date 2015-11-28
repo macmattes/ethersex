@@ -358,16 +358,14 @@ void ws2801_setColorTemp(uint16_t k)
 void ws2801_Clear(void)
 {
   if (ws2801_artnet_state == 0) {
-	uint16_t dmxpx;
-	for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
+	uint16_t dmxch;
+	for(dmxch = 0; dmxch < ws2801_channels; dmxch++)
 	{
-		ws2801_dmxUniverse[(dmxpx*3)+0] = 0;
-		ws2801_dmxUniverse[(dmxpx*3)+1] = 0;
-		ws2801_dmxUniverse[(dmxpx*3)+2] = 0;
+		ws2801_writeByte(0);
 	}
-    	if (dmxpx == ws2801_pixels) {
-    		ws2801_show_storage();
-		ws2801_state = 0;
+    
+    	if (dmxch == ws2801_channels) {
+    		ws2801_showPixel();
     	}
   }
 }
@@ -527,29 +525,34 @@ void ws2801_showPixel(void) {
 void ws2801_set_state (uint8_t val) {
 	if (ws2801_artnet_state == 0) {
 		ws2801_state = val;
-		//ws2801_setColor(ws2801_state*ws2801_r,ws2801_state*ws2801_g,ws2801_state*ws2801_b);
 		if (ws2801_state == 0) {
 			ws2801_Clear();
 		} else {
 			ws2801_WriteColor();
 		}
-	} else {
-		ws2801_state = 0;
+	} else if (ws2801_artnet_state == 1) {
+		if (val == 0) {
+			ws2801_artnet_state = 0;
+			ws2801_state = 0;
+		}
 	}
 }
 
 void ws2801_toggle_state (void) {
 	if (ws2801_artnet_state == 0) {
 		ws2801_state ^= 1;
-		ws2801_setColor(ws2801_state*ws2801_r,ws2801_state*ws2801_g,ws2801_state*ws2801_b);
+		if (ws2801_state == 0) {
+			ws2801_Clear();
+		} else {
+			ws2801_WriteColor();
+		}
 	}
 }
 
 void ws2801_set_artnet_state (uint8_t val) {
 	ws2801_artnet_state = val;
-	if (ws2801_artnet_state == 1) {
-		ws2801_state = 0;
-	} else {
+	ws2801_state = val;
+	if (ws2801_artnet_state == 0) {
 		ws2801_Clear();
 	}
 }
@@ -557,8 +560,9 @@ void ws2801_set_artnet_state (uint8_t val) {
 void ws2801_toggle_artnet_state (void) {
 	ws2801_artnet_state ^= 1;
 	if (ws2801_artnet_state == 1) {
-		ws2801_state = 0;
+		ws2801_state = 1;
 	} else {
+		ws2801_state = 0;
 		ws2801_Clear();
 	}
 }
