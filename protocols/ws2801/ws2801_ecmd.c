@@ -70,7 +70,7 @@ int16_t parse_cmd_ws2801_settemp(char *cmd, char *output, uint16_t len)
   WS2801_DEBUG("input: %d, Dim:%d \r\n",k);
   if (ret==1)
   {
-    ws2801_setColorTemp(k);
+    ws2801_colortemp_set(k);
     return ECMD_FINAL_OK;
   }
   else
@@ -86,8 +86,8 @@ int16_t parse_cmd_ws2801_set_rgb(char *cmd, char *output, uint16_t len)
     ret = sscanf_P(cmd, PSTR("%hhu %hhu %hhu"), &r, &g, &b);
     if(ret == 3)
 	{
-        ws2801_setColor( r, g, b);
-	ws2801_WriteColor();
+        ws2801_color_set( r, g, b);
+	ws2801_storage_write();
         return ECMD_FINAL_OK;
     }
     else

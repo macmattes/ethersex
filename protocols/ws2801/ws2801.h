@@ -43,7 +43,7 @@ uint16_t ws2801_colortemp;
 uint8_t ws2801_artnet_state;
 uint8_t ws2801_pixels;
 uint16_t ws2801_channels;
-uint16_t ws2801_dim_state;
+int ws2801_dim_state;
 
 #ifdef DEBUG_WS2801
 #include "core/debug.h"
@@ -216,24 +216,29 @@ struct ws2801_dmx
   uint8_t dataStart[];
 };
 
-uint8_t ws2801_state, ws2801_r, ws2801_g, ws2801_b;
+uint8_t ws2801_state, ws2801_r, ws2801_g, ws2801_b, ws2801_dim_direction;
 
 void ws2801_init(void);
 void ws2801_sendPollReply(void);
 void ws2801_main(void);
 void ws2801_get(void);
-void ws2801_setColor(uint8_t r, uint8_t g, uint8_t b);
-void ws2801_Clear(void);
-void ws2801_WriteColor(void);
-void ws2801_Dim(uint8_t val);
-void ws2801_show_storage(void);
-void ws2801_writeByte(unsigned char Send);
-void ws2801_showPixel(void);
-void ws2801_setColorTemp(uint16_t k);
-void ws2801_set_state(uint8_t val);
-void ws2801_toggle_state(void);
-void ws2801_set_artnet_state(uint8_t val);
-void ws2801_toggle_artnet_state(void);
+void ws2801_color_set(uint8_t r, uint8_t g, uint8_t b);
+void ws2801_colortemp_set(uint16_t k);
+void ws2801_clear(void);
+//void ws2801_storage_write_old(void);
+void ws2801_storage_write(void);
+void ws2801_storage_show(void);
+void ws2801_state_set(uint8_t val);
+void ws2801_state_toggle(void);
+void ws2801_artnet_state_set(uint8_t val);
+void ws2801_artnet_state_toggle(void);
+void ws2801_dim_up(void);
+void ws2801_dim_down(void);
+void ws2801_dim_updown(void);
+void ws2801_dim_set(uint8_t);
+
+void ws2801_writebyte(unsigned char);
+void ws2801_showpixel(void);
 
 void hsv_to_rgb(double h, double s, double v, double *R, double *G, double *B);
 void rgb_to_hsv(double r, double g, double b, double *H, double *S, double *V);

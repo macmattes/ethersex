@@ -105,7 +105,6 @@ ws2801_init(void)
   /* read subnet */
   ws2801_subNet = SUBNET_DEFAULT;
   ws2801_outputUniverse = CONF_WS2801_UNIVERSE;
-  ws2801_colortemp = 2700;
   strcpy_P(ws2801_shortName, PSTR("e6ArtNode"));
   strcpy_P(ws2801_longName, PSTR("e6ArtNode hostname: " CONF_HOSTNAME));
 
@@ -131,7 +130,11 @@ ws2801_init(void)
 #endif
 
   /* set startcolor */
-  ws2801_setColorTemp(ws2801_colortemp);
+  ws2801_dim_state = 31;
+  ws2801_colortemp = 5500;
+  ws2801_colortemp_set(ws2801_colortemp);
+  ws2801_storage_write();
+  ws2801_clear();
 
   WS2801_DEBUG("init complete\n");
   return;
@@ -269,7 +272,7 @@ ws2801_get(void)
             ws2801_pollReplyCounter++;
             ws2801_sendPollReply();
           }
-	  ws2801_show_storage();  //storage ausgeben
+	  ws2801_storage_show();  //storage ausgeben
       }
     }
       break;
@@ -282,16 +285,15 @@ ws2801_get(void)
   }
 }
 
-void ws2801_setColor(uint8_t r, uint8_t g, uint8_t b)
+void ws2801_color_set(uint8_t r, uint8_t g, uint8_t b)
 {
 	ws2801_r = r;
 	ws2801_g = g;
 	ws2801_b = b;
 }
 
-void ws2801_setColorTemp(uint16_t k)
+void ws2801_colortemp_set(uint16_t k)
 {
-  if (ws2801_artnet_state == 0) {
     float Temperature,Red,Green,Blue;
     Temperature = k / 100;
     
@@ -351,28 +353,25 @@ void ws2801_setColorTemp(uint16_t k)
         }
 
     }
-    ws2801_setColor(Red,Green,Blue);
-  }
+    ws2801_color_set(Red,Green,Blue);
 }
 
-void ws2801_Clear(void)
+void ws2801_clear(void)
 {
   if (ws2801_artnet_state == 0) {
-	uint16_t dmxpx;
-	for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
+	uint16_t dmxch;
+	for(dmxch = 0; dmxch < ws2801_channels; dmxch++)
 	{
-		ws2801_dmxUniverse[(dmxpx*3)+0] = 0;
-		ws2801_dmxUniverse[(dmxpx*3)+1] = 0;
-		ws2801_dmxUniverse[(dmxpx*3)+2] = 0;
+		ws2801_writebyte(0);
 	}
-    	if (dmxpx == ws2801_pixels) {
-    		ws2801_show_storage();
-		ws2801_state = 0;
+    
+    	if (dmxch == ws2801_channels) {
+    		ws2801_showpixel();
     	}
   }
 }
 
-void ws2801_WriteColor(void)
+/*void ws2801_storage_write_old(void)
 {
   if (ws2801_artnet_state == 0) {
 	uint16_t dmxpx;
@@ -383,40 +382,32 @@ void ws2801_WriteColor(void)
 		ws2801_dmxUniverse[(dmxpx*3)+2] = ws2801_b;
 	}
     	if (dmxpx == ws2801_pixels) {
-    		ws2801_show_storage();
+    		ws2801_storage_show();
 		ws2801_state = 1;
     	}
   }
-}
+}*/
 
-void ws2801_Dim(uint8_t dim)
+void ws2801_storage_write()
 { 
-   ws2801_dim_state = dim;
 	if (ws2801_artnet_state == 0) {
-		if (ws2801_dim_state == 0) {
-	  		ws2801_Clear();
-		} else {
-			double r,g,b,H,S,V;
-			rgb_to_hsv(ws2801_r,ws2801_g,ws2801_b,&H,&S,&V);
-			printf("HSV: %d %d %d\n",(uint8_t)H,(uint8_t)S,(uint8_t)V);
-			hsv_to_rgb(H,S,pgm_read_word (& pwmtable_8D[ws2801_dim_state]),&r,&g,&b);
-			printf("rgb: %d %d %d\n",(uint8_t)r,(uint8_t)g,(uint8_t)b);
+		double r,g,b,H,S,V;
+		rgb_to_hsv(ws2801_r,ws2801_g,ws2801_b,&H,&S,&V);
+		printf("HSV: %d %d %d\n",(uint8_t)H,(uint8_t)S,(uint8_t)V);
+		hsv_to_rgb(H,S,pgm_read_word (& pwmtable_8D[ws2801_dim_state]),&r,&g,&b);
+		printf("rgb: %d %d %d\n",(uint8_t)r,(uint8_t)g,(uint8_t)b);
 
-			uint16_t dmxpx;
-			for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
-			{
-				ws2801_dmxUniverse[(dmxpx*3)+0] = (uint8_t) r;
-				ws2801_dmxUniverse[(dmxpx*3)+1] = (uint8_t) g;
-				ws2801_dmxUniverse[(dmxpx*3)+2] = (uint8_t) b;
-			}
-		    	if (dmxpx == ws2801_pixels) {
-		    		ws2801_show_storage();
-				ws2801_state = 1;
-		    	}
+		uint16_t dmxpx;
+		for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
+		{
+			ws2801_dmxUniverse[(dmxpx*3)+0] = (uint8_t) r;
+			ws2801_dmxUniverse[(dmxpx*3)+1] = (uint8_t) g;
+			ws2801_dmxUniverse[(dmxpx*3)+2] = (uint8_t) b;
 		}
-	  }
+	}
 }
 
+// HSV-RGB Conversion-------------------------------------------------------------
 void
 hsv_to_rgb(double h, double s, double v, double *R, double *G, double *B)
 {
@@ -482,22 +473,24 @@ rgb_to_hsv(double r, double g, double b, double *H, double *S, double *V)
 		--*H;
 	}
 }
-//Datenausgabe
 
-void ws2801_show_storage(void)
+//Datenausgabe------------------------------------------------------------------------------
+
+void ws2801_storage_show(void)
 {
 	uint16_t dmxch;
 	for(dmxch = 0; dmxch < ws2801_channels; dmxch++)
 	{
-		ws2801_writeByte(ws2801_dmxUniverse[dmxch]);
+		ws2801_writebyte(ws2801_dmxUniverse[dmxch]);
 	}
     
     	if (dmxch == ws2801_channels) {
-    		ws2801_showPixel();
+    		ws2801_showpixel();
     	}
+	ws2801_state = 1;
 }
 
-void ws2801_writeByte(unsigned char Send)
+void ws2801_writebyte(unsigned char Send)
 {
 	register unsigned char BitCount = 8; // store variable BitCount in a cpu register
 	do
@@ -518,48 +511,94 @@ void ws2801_writeByte(unsigned char Send)
 	}while (--BitCount);
 } // ws2801_writeByte
 
-void ws2801_showPixel(void) {
+void ws2801_showpixel(void) {
     // when we're done we hold the clock pin low for a millisecond to latch it
     PIN_CLEAR(WS2801_CLOCK); // set clock LOW
     _delay_us(500); // wait for 500uS to display frame on ws2801
 }
 
-void ws2801_set_state (uint8_t val) {
+//----------------------------------------------------------------------------------------------
+
+void ws2801_state_set (uint8_t val) {
 	if (ws2801_artnet_state == 0) {
 		ws2801_state = val;
-		//ws2801_setColor(ws2801_state*ws2801_r,ws2801_state*ws2801_g,ws2801_state*ws2801_b);
 		if (ws2801_state == 0) {
-			ws2801_Clear();
+			ws2801_clear();
 		} else {
-			ws2801_WriteColor();
+			ws2801_storage_show();
 		}
-	} else {
-		ws2801_state = 0;
+	} else if (ws2801_artnet_state == 1) {
+		if (val == 0) {
+			ws2801_artnet_state = 0;
+			ws2801_state = 0;
+		}
 	}
 }
 
-void ws2801_toggle_state (void) {
+void ws2801_state_toggle (void) {
 	if (ws2801_artnet_state == 0) {
 		ws2801_state ^= 1;
-		ws2801_setColor(ws2801_state*ws2801_r,ws2801_state*ws2801_g,ws2801_state*ws2801_b);
+		if (ws2801_state == 0) {
+			ws2801_clear();
+		} else {
+			ws2801_storage_show();
+		}
 	}
 }
 
-void ws2801_set_artnet_state (uint8_t val) {
+void ws2801_artnet_state_set (uint8_t val) {
 	ws2801_artnet_state = val;
-	if (ws2801_artnet_state == 1) {
-		ws2801_state = 0;
-	} else {
-		ws2801_Clear();
+	ws2801_state = val;
+	if (ws2801_artnet_state == 0) {
+		ws2801_clear();
+		ws2801_storage_write();
 	}
 }
 
-void ws2801_toggle_artnet_state (void) {
+void ws2801_artnet_state_toggle (void) {
 	ws2801_artnet_state ^= 1;
 	if (ws2801_artnet_state == 1) {
-		ws2801_state = 0;
+		ws2801_state = 1;
 	} else {
-		ws2801_Clear();
+		ws2801_state = 0;
+		ws2801_clear();
+		ws2801_storage_write();
+	}
+}
+
+void ws2801_dim_up (void) {
+        ws2801_dim_state++;
+	if (ws2801_dim_state == 32) {
+		ws2801_dim_state = 0;
+	}
+}
+
+void ws2801_dim_down (void) {
+        ws2801_dim_state--;
+	if (ws2801_dim_state == -1) {
+		ws2801_dim_state = 31;
+	}
+}
+
+void ws2801_dim_updown (void) {
+	if (ws2801_dim_direction == 0) {
+		ws2801_dim_state--;
+		if (ws2801_dim_state == -1) {
+			ws2801_dim_state = 0;
+			ws2801_dim_direction = 1;
+		}
+	} else {
+		ws2801_dim_state++;
+		if (ws2801_dim_state == 32) {
+			ws2801_dim_state = 31;
+			ws2801_dim_direction = 0;
+		}
+	}	
+}
+
+void ws2801_dim_set (uint8_t dim) {
+	if ((dim >= 0)&&(dim<32)) {
+		ws2801_dim_state = dim;
 	}
 }
 
