@@ -39,12 +39,12 @@ int16_t parse_cmd_ws2801_universe(char *cmd, char *output, uint16_t len)
 {
   if (cmd[0])
   {
-    ws2801_outputUniverse = atoi(cmd);
+    ws2801_artnet_universe = atoi(cmd);
     return ECMD_FINAL_OK;
   }
   else
   {
-    itoa(ws2801_outputUniverse, output, 10);
+    itoa(ws2801_artnet_universe, output, 10);
     return ECMD_FINAL(strlen(output));
   }
 }

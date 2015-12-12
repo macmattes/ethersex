@@ -38,7 +38,7 @@
 
 #ifdef WS2801_SUPPORT
 uint16_t ws2801_port;
-uint8_t ws2801_outputUniverse;
+uint8_t ws2801_artnet_universe;
 uint16_t ws2801_colortemp;
 uint8_t ws2801_artnet_state;
 uint8_t ws2801_pixels;

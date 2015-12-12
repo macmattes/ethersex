@@ -54,7 +54,7 @@
  */
 
 uint8_t ws2801_subNet = SUBNET_DEFAULT;
-uint8_t ws2801_outputUniverse;
+uint8_t ws2801_artnet_universe;
 uint16_t ws2801_colortemp = 2600;
 uint8_t ws2801_sendPollReplyOnChange = TRUE;
 uip_ipaddr_t ws2801_pollReplyTarget;
@@ -104,7 +104,7 @@ ws2801_init(void)
 
   /* read subnet */
   ws2801_subNet = SUBNET_DEFAULT;
-  ws2801_outputUniverse = CONF_WS2801_UNIVERSE;
+  ws2801_artnet_universe = CONF_WS2801_UNIVERSE;
   strcpy_P(ws2801_shortName, PSTR("e6ArtNode"));
   strcpy_P(ws2801_longName, PSTR("e6ArtNode hostname: " CONF_HOSTNAME));
 
@@ -197,7 +197,7 @@ ws2801_sendPollReply(void)
   msg->goodInput[0] = (1 << 3);
   msg->goodOutput[0] = (1 << 1);
  
-  msg->swout[0] = (ws2801_subNet & 15) * 16 | (ws2801_outputUniverse & 15);
+  msg->swout[0] = (ws2801_subNet & 15) * 16 | (ws2801_artnet_universe & 15);
   msg->style = STYLE_NODE;
 
   memcpy(msg->mac, uip_ethaddr.addr, 6);
@@ -263,7 +263,7 @@ ws2801_get(void)
       dmx = (struct ws2801_dmx *) uip_appdata;
      if (ws2801_artnet_state == 1) 
      {
-      if (dmx->universe == ((ws2801_subNet << 4) | ws2801_outputUniverse))
+      if (dmx->universe == ((ws2801_subNet << 4) | ws2801_artnet_universe))
       {
 	  ws2801_artnetChannels = (dmx->lengthHi << 8) | dmx->length;
           memcpy((unsigned char*)&ws2801_dmxUniverse[0], &(dmx->dataStart), ws2801_artnetChannels);
@@ -294,6 +294,7 @@ void ws2801_color_set(uint8_t r, uint8_t g, uint8_t b)
 
 void ws2801_colortemp_set(uint16_t k)
 {
+    ws2801_colortemp = k;
     float Temperature,Red,Green,Blue;
     Temperature = k / 100;
     
@@ -394,15 +395,19 @@ void ws2801_storage_write()
 		double r,g,b,H,S,V;
 		rgb_to_hsv(ws2801_r,ws2801_g,ws2801_b,&H,&S,&V);
 		printf("HSV: %d %d %d\n",(uint8_t)H,(uint8_t)S,(uint8_t)V);
-		hsv_to_rgb(H,S,pgm_read_word (& pwmtable_8D[ws2801_dim_state]),&r,&g,&b);
+		//hsv_to_rgb(H,S,pgm_read_word (& pwmtable_8D[ws2801_dim_state]),&r,&g,&b);
+		if (ws2801_dim_state > 0) { 
+			hsv_to_rgb(H,S,ws2801_dim_state,&r,&g,&b);
 		printf("rgb: %d %d %d\n",(uint8_t)r,(uint8_t)g,(uint8_t)b);
-
 		uint16_t dmxpx;
 		for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
 		{
 			ws2801_dmxUniverse[(dmxpx*3)+0] = (uint8_t) r;
 			ws2801_dmxUniverse[(dmxpx*3)+1] = (uint8_t) g;
 			ws2801_dmxUniverse[(dmxpx*3)+2] = (uint8_t) b;
+		}
+		} else {
+			ws2801_state = 0;
 		}
 	}
 }
@@ -568,7 +573,7 @@ void ws2801_artnet_state_toggle (void) {
 
 void ws2801_dim_up (void) {
         ws2801_dim_state++;
-	if (ws2801_dim_state == 32) {
+	if (ws2801_dim_state == 256) {
 		ws2801_dim_state = 0;
 	}
 }
@@ -576,7 +581,7 @@ void ws2801_dim_up (void) {
 void ws2801_dim_down (void) {
         ws2801_dim_state--;
 	if (ws2801_dim_state == -1) {
-		ws2801_dim_state = 31;
+		ws2801_dim_state = 255;
 	}
 }
 
@@ -589,18 +594,19 @@ void ws2801_dim_updown (void) {
 		}
 	} else {
 		ws2801_dim_state++;
-		if (ws2801_dim_state == 32) {
-			ws2801_dim_state = 31;
+		if (ws2801_dim_state == 256) {
+			ws2801_dim_state = 255;
 			ws2801_dim_direction = 0;
 		}
 	}	
 }
 
 void ws2801_dim_set (uint8_t dim) {
-	if ((dim >= 0)&&(dim<32)) {
+	if ((dim >= 0)&&(dim<256)) {
 		ws2801_dim_state = dim;
 	}
 }
+
 
 #endif /* WS2801_SUPPORT */
 
