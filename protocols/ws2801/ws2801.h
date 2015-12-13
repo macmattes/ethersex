@@ -44,6 +44,7 @@ uint8_t ws2801_artnet_state;
 uint8_t ws2801_pixels;
 uint16_t ws2801_channels;
 int ws2801_dim_state;
+int ws2801_slow_dim_state;
 
 #ifdef DEBUG_WS2801
 #include "core/debug.h"
@@ -221,12 +222,14 @@ uint8_t ws2801_state, ws2801_r, ws2801_g, ws2801_b, ws2801_dim_direction;
 void ws2801_init(void);
 void ws2801_sendPollReply(void);
 void ws2801_main(void);
+void ws2801_periodic(void);
 void ws2801_get(void);
 void ws2801_color_set(uint8_t r, uint8_t g, uint8_t b);
 void ws2801_colortemp_set(uint16_t k);
 void ws2801_clear(void);
 //void ws2801_storage_write_old(void);
 void ws2801_storage_write(void);
+void ws2801_storage_write_slowdim(void);
 void ws2801_storage_show(void);
 void ws2801_state_set(uint8_t val);
 void ws2801_state_toggle(void);
@@ -236,6 +239,11 @@ void ws2801_dim_up(void);
 void ws2801_dim_down(void);
 void ws2801_dim_updown(void);
 void ws2801_dim_set(uint8_t);
+void ws2801_dim_slowup_set(uint16_t);
+void ws2801_dim_slowup_timer_set(uint16_t);
+void ws2801_dim_slowdown_set(uint16_t);
+void ws2801_dim_slowdown_timer_set(uint16_t);
+void ws2801_dim_onfor_timer_set(uint16_t); 
 
 void ws2801_writebyte(unsigned char);
 void ws2801_showpixel(void);
