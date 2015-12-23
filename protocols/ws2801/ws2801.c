@@ -47,8 +47,8 @@
 #ifdef WS2801_SUPPORT
 
 #define WS2801_STATE_IDLE     	0
-#define WS2801_STATE_SLOWUP     1
-#define WS2801_STATE_SLOWDOWN   2
+#define WS2801_STATE_RAMP_UP     1
+#define WS2801_STATE_RAMP_DOWN   2
 #define WS2801_STATE_ONFORTIMER 3
 #define WS2801_STATE_ARTNET   	4
 
@@ -80,16 +80,21 @@ uint16_t ws2801_channels = CONF_WS2801_PIXELS*3;
 const char ws2801_ID[8] PROGMEM = "Art-Net";
 uint8_t ws2801_artnet_state = 0;
 
+const uint16_t pwmtable_8C[16] PROGMEM =
+{
+    0, 2, 3, 4, 6, 8, 11, 16, 23, 32, 45, 64, 90, 128, 181, 255
+};
+
 const uint16_t pwmtable_8D[32] PROGMEM =
 {
     0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23,
     27, 32, 38, 45, 54, 64, 76, 91, 108, 128, 152, 181, 215, 255
 };
 
-volatile uint32_t slowup_timer;
-volatile uint32_t slowdown_timer;
+volatile uint32_t ramp_up_timer;
+volatile uint32_t ramp_down_timer;
 volatile uint32_t onfor_timer;
-uint16_t ws2801_slowup_timer, ws2801_slowdown_timer;
+uint16_t ws2801_ramp_up_timer, ws2801_ramp_down_timer, ws2801_timer, ws2801_dim_steps;
 volatile uint8_t periodic_state = WS2801_STATE_IDLE;
 float dim_steps;
 
@@ -145,18 +150,18 @@ ws2801_init(void)
 #endif
 
   /* set startcolor */
-  ws2801_dim_state = 255;
+  ws2801_dim_state = 15;
   ws2801_colortemp = 6500;
   ws2801_colortemp_set(ws2801_colortemp);
   ws2801_storage_write();
   ws2801_clear();
 
   /* set standard timer */
-  slowup_timer = 0;
-  slowdown_timer = 0;
+  ramp_up_timer = 0;
+  ramp_down_timer = 0;
   onfor_timer = 0;
-  ws2801_slowup_timer = 3;
-  ws2801_slowdown_timer = 5;
+  ws2801_ramp_up_timer = 2;
+  ws2801_ramp_down_timer = 2;
 
   WS2801_DEBUG("init complete\n");
   return;
@@ -414,46 +419,52 @@ void ws2801_clear(void)
 void ws2801_storage_write()
 { 
 	if (ws2801_artnet_state == 0) {
-		double r,g,b,H,S,V;
-		rgb_to_hsv(ws2801_r,ws2801_g,ws2801_b,&H,&S,&V);
-		//printf("HSV: %d %d %d\n",(uint8_t)H,(uint8_t)S,(uint8_t)V);
-		//hsv_to_rgb(H,S,pgm_read_word (& pwmtable_8D[ws2801_dim_state]),&r,&g,&b);
-		if (ws2801_dim_state > 0) { 
-			hsv_to_rgb(H,S,ws2801_dim_state,&r,&g,&b);
-		//printf("rgb: %d %d %d\n",(uint8_t)r,(uint8_t)g,(uint8_t)b);
-		uint16_t dmxpx;
-		for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
-		{
-			ws2801_dmxUniverse[(dmxpx*3)+0] = (uint8_t) r;
-			ws2801_dmxUniverse[(dmxpx*3)+1] = (uint8_t) g;
-			ws2801_dmxUniverse[(dmxpx*3)+2] = (uint8_t) b;
-		}
-		} else {
-			ws2801_state = 0;
+		if (ws2801_dim_state >= 0) { 
+			double r,g,b,H,S,V;
+			rgb_to_hsv(ws2801_r,ws2801_g,ws2801_b,&H,&S,&V);
+			//hsv_to_rgb(H,S,ws2801_dim_state,&r,&g,&b);
+			hsv_to_rgb(H,S,pgm_read_word (& pwmtable_8C[ws2801_dim_state]),&r,&g,&b);
+
+			uint16_t dmxpx;
+			for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
+			{
+				ws2801_dmxUniverse[(dmxpx*3)+0] = (uint8_t) r;
+				ws2801_dmxUniverse[(dmxpx*3)+1] = (uint8_t) g;
+				ws2801_dmxUniverse[(dmxpx*3)+2] = (uint8_t) b;
+			}
 		}
 	}
 }
 
+
+double r,g,b,H,S,V,r_n,g_n,b_n;
 void ws2801_storage_write_slowdim()
 { 
 	if (ws2801_artnet_state == 0) {
-		double r,g,b,H,S,V;
-		rgb_to_hsv(ws2801_r,ws2801_g,ws2801_b,&H,&S,&V);
-		//printf("HSV: %d %d %d\n",(uint8_t)H,(uint8_t)S,(uint8_t)V);
-		//hsv_to_rgb(H,S,pgm_read_word (& pwmtable_8D[ws2801_dim_state]),&r,&g,&b);
 		if (ws2801_slow_dim_state > 0) { 
-			hsv_to_rgb(H,S,ws2801_slow_dim_state,&r,&g,&b);
-		//printf("rgb: %d %d %d\n",(uint8_t)r,(uint8_t)g,(uint8_t)b);
-		uint16_t dmxpx;
-		for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
-		{
-			ws2801_dmxUniverse[(dmxpx*3)+0] = (uint8_t) r;
-			ws2801_dmxUniverse[(dmxpx*3)+1] = (uint8_t) g;
-			ws2801_dmxUniverse[(dmxpx*3)+2] = (uint8_t) b;
-		}
+			rgb_to_hsv(ws2801_r,ws2801_g,ws2801_b,&H,&S,&V);
+			//hsv_to_rgb(H,S,ws2801_slow_dim_state,&r,&g,&b);
+			hsv_to_rgb(H,S,pgm_read_word (& pwmtable_8C[ws2801_slow_dim_state]),&r_n,&g_n,&b_n);
+			r=((ws2801_dim_steps-1)*r+r_n)/ws2801_dim_steps;
+			g=((ws2801_dim_steps-1)*g+g_n)/ws2801_dim_steps;
+			b=((ws2801_dim_steps-1)*b+b_n)/ws2801_dim_steps;
+			uint16_t dmxpx;
+			for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
+			{
+				ws2801_dmxUniverse[(dmxpx*3)+0] = (uint8_t) r;
+				ws2801_dmxUniverse[(dmxpx*3)+1] = (uint8_t) g;
+				ws2801_dmxUniverse[(dmxpx*3)+2] = (uint8_t) b;
+			}
 		} else {
-			ws2801_state = 0;
+			uint16_t dmxpx;
+			for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
+			{
+				ws2801_dmxUniverse[(dmxpx*3)+0] = 0;
+				ws2801_dmxUniverse[(dmxpx*3)+1] = 0;
+				ws2801_dmxUniverse[(dmxpx*3)+2] = 0;
+			}
 		}
+		
 	}
 }
 
@@ -574,18 +585,18 @@ void ws2801_state_set (uint8_t val) {
 		ws2801_state = val;
 		if (ws2801_state == 0) {
 			//ws2801_clear();
-			if (ws2801_slowdown_timer > 0){
-			  slowdown_timer = ws2801_slowdown_timer*milli;
+			if (ws2801_ramp_down_timer > 0){
+			  ramp_down_timer = ws2801_ramp_down_timer*milli;
 			} else {
-			  slowdown_timer = 0;
+			  ramp_down_timer = 0;
 			  ws2801_clear();
 			}
 		} else {
 			//ws2801_storage_show();
-			if (ws2801_slowup_timer > 0){
-			  slowup_timer = ws2801_slowup_timer*milli;
+			if (ws2801_ramp_up_timer > 0){
+			  ramp_up_timer = ws2801_ramp_up_timer*milli;
 			} else {
-			  slowup_timer = 0;
+			  ramp_up_timer = 0;
 			  ws2801_storage_show();
 			}
 		}
@@ -602,18 +613,18 @@ void ws2801_state_toggle (void) {
 		ws2801_state ^= 1;
 		if (ws2801_state == 0) {
 			//ws2801_clear();
-			if (ws2801_slowdown_timer > 0){
-			  slowdown_timer = ws2801_slowdown_timer*milli;
+			if (ws2801_ramp_down_timer > 0){
+			  ramp_down_timer = ws2801_ramp_down_timer*milli;
 			} else {
-			  slowdown_timer = 0;
+			  ramp_down_timer = 0;
 			  ws2801_clear();
 			}
 		} else {
 			//ws2801_storage_show();
-			if (ws2801_slowup_timer > 0){
-			  slowup_timer = ws2801_slowup_timer*milli;
+			if (ws2801_ramp_up_timer > 0){
+			  ramp_up_timer = ws2801_ramp_up_timer*milli;
 			} else {
-			  slowup_timer = 0; 
+			  ramp_up_timer = 0; 
 			  ws2801_storage_show();
 			}
 		}
@@ -642,7 +653,7 @@ void ws2801_artnet_state_toggle (void) {
 
 void ws2801_dim_up (void) {
         ws2801_dim_state++;
-	if (ws2801_dim_state == 256) {
+	if (ws2801_dim_state == 16) {
 		ws2801_dim_state = 0;
 	}
 }
@@ -650,7 +661,7 @@ void ws2801_dim_up (void) {
 void ws2801_dim_down (void) {
         ws2801_dim_state--;
 	if (ws2801_dim_state == -1) {
-		ws2801_dim_state = 255;
+		ws2801_dim_state = 15;
 	}
 }
 
@@ -663,40 +674,40 @@ void ws2801_dim_updown (void) {
 		}
 	} else {
 		ws2801_dim_state++;
-		if (ws2801_dim_state == 256) {
-			ws2801_dim_state = 255;
+		if (ws2801_dim_state == 16) {
+			ws2801_dim_state = 15;
 			ws2801_dim_direction = 0;
 		}
 	}	
 }
 
 void ws2801_dim_set (uint8_t dim) {
-	if ((dim >= 0)&&(dim<256)) {
+	if ((dim >= 0)&&(dim<16)) {
 		ws2801_dim_state = dim;
 	}
 }
 
-void ws2801_dim_slowup_set (uint16_t timer) {
+void ws2801_dim_ramp_up_set (uint16_t timer) {
 	if ((timer >= 0)&&(timer<16201)) {
-		slowup_timer = timer*milli;
+		ramp_up_timer = timer*milli;
 	}
 }
 
-void ws2801_dim_slowup_timer_set (uint16_t timer) {
+void ws2801_dim_ramp_up_timer_set (uint16_t timer) {
 	if ((timer >= 0)&&(timer<16201)) {
-		ws2801_slowup_timer = timer*milli;
+		ws2801_ramp_up_timer = timer*milli;
 	}
 }
 
-void ws2801_dim_slowdown_set (uint16_t timer) {
+void ws2801_dim_ramp_down_set (uint16_t timer) {
 	if ((timer >= 0)&&(timer<16201)) {
-		slowdown_timer = timer*milli;
+		ramp_down_timer = timer*milli;
 	}
 }
 
-void ws2801_dim_slowdown_timer_set (uint16_t timer) {
+void ws2801_dim_ramp_down_timer_set (uint16_t timer) {
 	if ((timer >= 0)&&(timer<16201)) {
-		ws2801_slowdown_timer = timer*milli;
+		ws2801_ramp_down_timer = timer*milli;
 	}
 }
 
@@ -712,15 +723,14 @@ ws2801_periodic(void)
   if (ws2801_artnet_state == 0) {
   switch(periodic_state) {
     case WS2801_STATE_IDLE:
-      if (slowup_timer > 0){
-	periodic_state = WS2801_STATE_SLOWUP;
-	ws2801_slow_dim_state = 0;
-        dim_steps = (ws2801_dim_state / slowup_timer);
+      if (ramp_up_timer > 0){
+	periodic_state = WS2801_STATE_RAMP_UP;
+        ws2801_dim_steps = ramp_up_timer/(ws2801_dim_state - ws2801_slow_dim_state + 2);
       }
-      if (slowdown_timer > 0){
-	periodic_state = WS2801_STATE_SLOWDOWN;
+      if (ramp_down_timer > 0){
+	periodic_state = WS2801_STATE_RAMP_DOWN;
 	ws2801_slow_dim_state = ws2801_dim_state;
-        dim_steps = (ws2801_slow_dim_state / slowdown_timer);
+        ws2801_dim_steps = ramp_down_timer/(ws2801_slow_dim_state + 2);
       }
       if (onfor_timer > 0){
 	periodic_state = WS2801_STATE_ONFORTIMER;
@@ -730,39 +740,41 @@ ws2801_periodic(void)
       }
       return;
 
-    case WS2801_STATE_SLOWUP:
-      if (slowup_timer > 0) {
+    case WS2801_STATE_RAMP_UP:
+      if (ramp_up_timer > 0) {
 	if (ws2801_slow_dim_state < ws2801_dim_state) {
-	  ws2801_slow_dim_state = (ws2801_dim_state-(slowup_timer * dim_steps));
+	  if (ws2801_timer > 0) {
+	  ws2801_timer--;
+	  } else {
+	  ws2801_timer = ws2801_dim_steps;
+	  ws2801_slow_dim_state++;
+	  }
+	}
 	  ws2801_storage_write_slowdim();
 	  ws2801_storage_show();
-	}
-        slowup_timer--;
+        ramp_up_timer--;
         return;
       }
-
-      ws2801_slow_dim_state = ws2801_dim_state;
-      ws2801_storage_write();
-      ws2801_storage_show();
 
       /* reset state */
       periodic_state = WS2801_STATE_IDLE;
       return;
 
-    case WS2801_STATE_SLOWDOWN:
-      if (slowdown_timer > 0) {
+    case WS2801_STATE_RAMP_DOWN:
+      if (ramp_down_timer > 0) {
 	if (ws2801_slow_dim_state > 0) {
-	  ws2801_slow_dim_state = (slowdown_timer * dim_steps);
+	  if (ws2801_timer > 0) {
+	  ws2801_timer--;
+	  } else {
+	  ws2801_timer = ws2801_dim_steps;
+	  ws2801_slow_dim_state--;
+	  }
+	}
 	  ws2801_storage_write_slowdim();
 	  ws2801_storage_show();
-	}
-        slowdown_timer--;
+        ramp_down_timer--;
         return;
       }
-
-      ws2801_slow_dim_state = 0;
-      ws2801_clear();
-      ws2801_state = 0;
 
       /* reset state */
       periodic_state = WS2801_STATE_IDLE;

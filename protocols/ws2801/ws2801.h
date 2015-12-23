@@ -239,10 +239,10 @@ void ws2801_dim_up(void);
 void ws2801_dim_down(void);
 void ws2801_dim_updown(void);
 void ws2801_dim_set(uint8_t);
-void ws2801_dim_slowup_set(uint16_t);
-void ws2801_dim_slowup_timer_set(uint16_t);
-void ws2801_dim_slowdown_set(uint16_t);
-void ws2801_dim_slowdown_timer_set(uint16_t);
+void ws2801_dim_ramp_up_set(uint16_t);
+void ws2801_dim_ramp_up_timer_set(uint16_t);
+void ws2801_dim_ramp_down_set(uint16_t);
+void ws2801_dim_ramp_down_timer_set(uint16_t);
 void ws2801_dim_onfor_timer_set(uint16_t); 
 
 void ws2801_writebyte(unsigned char);
