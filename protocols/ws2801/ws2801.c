@@ -46,12 +46,6 @@
 #include "services/dmx-storage/dmx_storage.h"
 #ifdef WS2801_SUPPORT
 
-#define WS2801_STATE_IDLE     	0
-#define WS2801_STATE_RAMP_UP     1
-#define WS2801_STATE_RAMP_DOWN   2
-#define WS2801_STATE_ONFORTIMER 3
-#define WS2801_STATE_ARTNET   	4
-
 //#define BAUD 250000
 //#define MAX_CHANNELS 			512
 
@@ -62,9 +56,6 @@
 uint8_t ws2801_subNet = SUBNET_DEFAULT;
 uint8_t ws2801_artnet_universe;
 uint16_t ws2801_colortemp = 2600;
-uint8_t ws2801_sendPollReplyOnChange = TRUE;
-uip_ipaddr_t ws2801_pollReplyTarget;
-uint32_t ws2801_pollReplyCounter = 0;
 uint8_t ws2801_status = RC_POWER_OK;
 char ws2801_shortName[18] = { '\0' };
 char ws2801_longName[64] = { '\0' };
@@ -128,17 +119,8 @@ ws2801_init(void)
   strcpy_P(ws2801_shortName, PSTR("e6ArtNode"));
   strcpy_P(ws2801_longName, PSTR("e6ArtNode hostname: " CONF_HOSTNAME));
 
-  uip_ipaddr_copy(ws2801_pollReplyTarget,all_ones_addr);
-
   /* net_init */
   ws2801_netInit();
-
-  /* annouce that we are here  */
-  WS2801_DEBUG("send PollReply\n");
-  ws2801_sendPollReply();
-
-  /* enable PollReply on changes */
-  ws2801_sendPollReplyOnChange = TRUE;
 
   /* enable ws2801 */
   PIN_CLEAR(WS2801_CLOCK);
@@ -167,92 +149,7 @@ ws2801_init(void)
   return;
 }
 
-static void
-ws2801_send(uint16_t len)
-{
-  uip_udp_conn_t ws2801_conn;
-  uip_ipaddr_copy(ws2801_conn.ripaddr, ws2801_pollReplyTarget);
-  ws2801_conn.rport = HTONS(ws2801_port);
-  ws2801_conn.lport = HTONS(ws2801_port);
-  uip_udp_conn = &ws2801_conn;
 
-  uip_slen = len;
-  uip_process(UIP_UDP_SEND_CONN);
-  router_output();
-
-  uip_slen = 0;
-}
-
-
-/* ----------------------------------------------------------------------------
- * send an ArtPollReply packet
- */
-void
-ws2801_sendPollReply(void)
-{
-
-  /* prepare ws2801 PollReply packet */
-  struct ws2801_pollreply *msg =
-    (struct ws2801_pollreply *) &uip_buf[UIP_LLH_LEN + UIP_IPUDPH_LEN];
-  memset(msg, 0, sizeof(struct ws2801_pollreply));
-  WS2801_DEBUG("PollReply allocated\n");
-  strncpy_P((char *) msg->id, ws2801_ID, 8);
-
-  msg->opcode = OP_POLLREPLY;
-
-  msg->versionInfoH = (FIRMWARE_VERSION >> 8) & 0xFF;
-  msg->versionInfo = FIRMWARE_VERSION & 0xFF;
-
-  msg->subSwitchH = 0;
-  msg->subSwitch = ws2801_subNet & 15;
-
-  /* Report as 'AvrArtNode' http://www.dmxcontrol.de/wiki/Art-Net-Node_f%C3%BCr_25_Euro */
-  msg->oem = 0x08b1;
-  msg->ubeaVersion = 0;
-  msg->status = 0;
-  /* Report as Manufacturer "ESTA" http://tsp.plasa.org/tsp/working_groups/CP/mfctrIDs.php */
-  msg->estaMan = 0xFFFF;
-  strcpy(msg->shortName, ws2801_shortName);
-  strcpy(msg->longName, ws2801_longName);
-  sprintf(msg->nodeReport, "#%04X [%04u] e6ArtNode is ready", ws2801_status,
-          (unsigned int) ws2801_pollReplyCounter);
-
-  msg->numPortsH = 0;
-  msg->numPorts = 1;
-
-  msg->portTypes[0] = PORT_TYPE_DMX_OUTPUT;
-  msg->goodInput[0] = (1 << 3);
-  msg->goodOutput[0] = (1 << 1);
- 
-  msg->swout[0] = (ws2801_subNet & 15) * 16 | (ws2801_artnet_universe & 15);
-  msg->style = STYLE_NODE;
-
-  memcpy(msg->mac, uip_ethaddr.addr, 6);
-
-  /* broadcast the packet */
-  ws2801_send(sizeof(struct ws2801_pollreply));
-}
-
-int16_t
-parse_cmd_ws2801_pollreply(int8_t * cmd, int8_t * output, uint16_t len)
-{
-  ws2801_sendPollReply();
-  return ECMD_FINAL_OK;
-}
-
-void
-processPollPacket(struct ws2801_poll *poll)
-{
-  if ((poll->talkToMe & 2) == 2)
-    ws2801_sendPollReplyOnChange = TRUE;
-  else
-    ws2801_sendPollReplyOnChange = FALSE;
-  if ((poll->talkToMe & 1) == 1)
-	  uip_ipaddr_copy(ws2801_pollReplyTarget,uip_hostaddr);
-  else
-	  uip_ipaddr_copy(ws2801_pollReplyTarget,all_ones_addr);
-  ws2801_sendPollReply();
-}
 
 /* ----------------------------------------------------------------------------
  * receive Art-Net packet
@@ -274,15 +171,7 @@ ws2801_get(void)
   switch (header->opcode)
   {
     case OP_POLL:;
-      struct ws2801_poll *poll;
-
-      WS2801_DEBUG("Received ws2801 poll packet!\r\n");
-      poll = (struct ws2801_poll *) uip_appdata;
-      processPollPacket(poll);
-      break;
     case OP_POLLREPLY:;
-      WS2801_DEBUG("Received ws2801 poll reply packet!\r\n");
-      break;
     case OP_OUTPUT:;
       struct ws2801_dmx *dmx;
 
@@ -294,11 +183,6 @@ ws2801_get(void)
       {
 	  ws2801_artnetChannels = (dmx->lengthHi << 8) | dmx->length;
           memcpy((unsigned char*)&ws2801_dmxUniverse[0], &(dmx->dataStart), ws2801_artnetChannels);
-          if (ws2801_sendPollReplyOnChange == TRUE)
-          {
-            ws2801_pollReplyCounter++;
-            ws2801_sendPollReply();
-          }
 	  ws2801_storage_show();  //storage ausgeben
       }
     }
@@ -398,23 +282,6 @@ void ws2801_clear(void)
     	}
   }
 }
-
-/*void ws2801_storage_write_old(void)
-{
-  if (ws2801_artnet_state == 0) {
-	uint16_t dmxpx;
-	for(dmxpx = 0; dmxpx < ws2801_pixels; dmxpx++)
-	{
-		ws2801_dmxUniverse[(dmxpx*3)+0] = ws2801_r;
-		ws2801_dmxUniverse[(dmxpx*3)+1] = ws2801_g;
-		ws2801_dmxUniverse[(dmxpx*3)+2] = ws2801_b;
-	}
-    	if (dmxpx == ws2801_pixels) {
-    		ws2801_storage_show();
-		ws2801_state = 1;
-    	}
-  }
-}*/
 
 void ws2801_storage_write()
 { 

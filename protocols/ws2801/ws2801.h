@@ -46,6 +46,7 @@ uint16_t ws2801_channels;
 int ws2801_dim_state;
 int ws2801_slow_dim_state;
 
+
 #ifdef DEBUG_WS2801
 #include "core/debug.h"
 #define WS2801_DEBUG(str...) debug_printf ("ws2801: " str)
@@ -82,125 +83,19 @@ int ws2801_slow_dim_state;
 /* ----------------------------------------------------------------------------
  * other defines
  */
-#define SHORT_NAME_LENGTH	18
-#define LONG_NAME_LENGTH	64
-#define PORT_NAME_LENGTH	32
-#define WS2801_MAX_DATA_LENGTH  511
-#define WS2801_MAX_CHANNELS     512
-#define WS2801_MAX_PORTS	4
-#define PROTOCOL_VERSION 	14      /* DMX-Hub protocol version. */
-#define FIRMWARE_VERSION 	0x0100  /* DMX-Hub firmware version. */
-#define STYLE_NODE 		0       /* Responder is a Node (DMX <-> Ethernet Device) */
-
-#define PORT_TYPE_DMX_OUTPUT	0x80
-#define PORT_TYPE_DMX_INPUT 	0x40
+#define WS2801_STATE_IDLE     	0
+#define WS2801_STATE_RAMP_UP     1
+#define WS2801_STATE_RAMP_DOWN   2
+#define WS2801_STATE_ONFORTIMER 3
+#define WS2801_STATE_ARTNET   	4
 
 /* ----------------------------------------------------------------------------
  * packet formats
  */
-struct ws2801_packet_addr
-{
-  uint8_t ip[4];
-  uint16_t port;
-};
-
 struct ws2801_header
 {
   uint8_t id[8];
   uint16_t opcode;
-};
-
-struct ws2801_poll
-{
-  uint8_t id[8];
-  uint16_t opcode;
-  uint8_t versionH;
-  uint8_t version;
-  uint8_t talkToMe;
-  uint8_t pad;
-};
-
-struct ws2801_pollreply
-{
-  char id[8];
-  uint16_t opcode;
-  struct ws2801_packet_addr addr;
-  uint8_t versionInfoH;
-  uint8_t versionInfo;
-  uint8_t subSwitchH;
-  uint8_t subSwitch;
-  uint16_t oem;
-  uint8_t ubeaVersion;
-  uint8_t status;
-  uint16_t estaMan;
-  char shortName[SHORT_NAME_LENGTH];
-  char longName[LONG_NAME_LENGTH];
-  char nodeReport[LONG_NAME_LENGTH];
-  uint8_t numPortsH;
-  uint8_t numPorts;
-  uint8_t portTypes[WS2801_MAX_PORTS];
-  uint8_t goodInput[WS2801_MAX_PORTS];
-  uint8_t goodOutput[WS2801_MAX_PORTS];
-  uint8_t swin[WS2801_MAX_PORTS];
-  uint8_t swout[WS2801_MAX_PORTS];
-  uint8_t swVideo;
-  uint8_t swMacro;
-  uint8_t swRemote;
-  uint8_t spare1;
-  uint8_t spare2;
-  uint8_t spare3;
-  uint8_t style;
-  uint8_t mac[6];
-  uint8_t filler[32];
-};
-
-struct ws2801_ipprog
-{
-  char id[8];
-  uint16_t opcode;
-  uint8_t versionH;
-  uint8_t version;
-  uint8_t filler1;
-  uint8_t filler2;
-  uint8_t command;
-  uint8_t filler3;
-  uint8_t progIp[4];
-  uint8_t progSm[4];
-  uint8_t progPort[2];
-  uint8_t spare[8];
-};
-
-struct ws2801_ipprogreply
-{
-  char id[8];
-  uint16_t opcode;
-  uint8_t versionH;
-  uint8_t version;
-  uint8_t filler1;
-  uint8_t filler2;
-  uint8_t filler3;
-  uint8_t filler4;
-  uint8_t progIp[4];
-  uint8_t progSm[4];
-  uint8_t progPort[2];
-  uint8_t spare[8];
-};
-
-struct ws2801_address
-{
-  char id[8];
-  uint16_t opcode;
-  uint8_t versionH;
-  uint8_t version;
-  uint8_t filler1;
-  uint8_t filler2;
-  int8_t shortName[SHORT_NAME_LENGTH];
-  int8_t longName[LONG_NAME_LENGTH];
-  uint8_t swin[WS2801_MAX_PORTS];
-  uint8_t swout[WS2801_MAX_PORTS];
-  uint8_t subSwitch;
-  uint8_t swVideo;
-  uint8_t command;
 };
 
 struct ws2801_dmx
@@ -227,7 +122,6 @@ void ws2801_get(void);
 void ws2801_color_set(uint8_t r, uint8_t g, uint8_t b);
 void ws2801_colortemp_set(uint16_t k);
 void ws2801_clear(void);
-//void ws2801_storage_write_old(void);
 void ws2801_storage_write(void);
 void ws2801_storage_write_slowdim(void);
 void ws2801_storage_show(void);
