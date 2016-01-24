@@ -40,11 +40,7 @@
 uint16_t ws2801_port;
 uint8_t ws2801_artnet_universe;
 uint16_t ws2801_colortemp;
-uint8_t ws2801_artnet_state;
-uint8_t ws2801_pixels;
-uint16_t ws2801_channels;
-int ws2801_dim_state;
-int ws2801_slow_dim_state;
+//uint8_t ws2801_artnet_state;
 
 
 #ifdef DEBUG_WS2801
@@ -112,7 +108,8 @@ struct ws2801_dmx
   uint8_t dataStart[];
 };
 
-uint8_t ws2801_state, ws2801_r, ws2801_g, ws2801_b, ws2801_dim_direction;
+uint8_t ws2801_r, ws2801_g, ws2801_b;
+volatile int ws2801_state, ws2801_artnet_state, ws2801_dim_state, ws2801_dim_direction;
 
 void ws2801_init(void);
 void ws2801_sendPollReply(void);
@@ -132,18 +129,14 @@ void ws2801_artnet_state_toggle(void);
 void ws2801_dim_up(void);
 void ws2801_dim_down(void);
 void ws2801_dim_updown(void);
-void ws2801_dim_set(uint8_t);
-void ws2801_dim_ramp_up_set(uint16_t);
-void ws2801_dim_ramp_up_timer_set(uint16_t);
-void ws2801_dim_ramp_down_set(uint16_t);
-void ws2801_dim_ramp_down_timer_set(uint16_t);
-void ws2801_dim_onfor_timer_set(uint16_t); 
+void ws2801_dim_set(int);
+void ws2801_dim_ramp_up_set(int);
+void ws2801_dim_ramp_up_timer_set(int);
+void ws2801_dim_ramp_down_set(int);
+void ws2801_dim_ramp_down_timer_set(int);
+void ws2801_dim_onfor_timer_set(int);
 
-void ws2801_writebyte(unsigned char);
-void ws2801_showpixel(void);
-
-void hsv_to_rgb(double h, double s, double v, double *R, double *G, double *B);
-void rgb_to_hsv(double r, double g, double b, double *H, double *S, double *V);
+void ws2801_out(void);
 
 #endif /* _WS2801_H */
 #endif /* WS2801_SUPPORT */

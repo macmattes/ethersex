@@ -46,50 +46,55 @@
 #include "services/dmx-storage/dmx_storage.h"
 #ifdef WS2801_SUPPORT
 
-//#define BAUD 250000
-//#define MAX_CHANNELS 			512
-
 /* ----------------------------------------------------------------------------
  *global variables
  */
 
 uint8_t ws2801_subNet = SUBNET_DEFAULT;
-uint8_t ws2801_artnet_universe;
-uint16_t ws2801_colortemp = 2600;
+uint8_t ws2801_artnet_universe = CONF_WS2801_UNIVERSE;
+uint16_t ws2801_colortemp = 6500;
 uint8_t ws2801_status = RC_POWER_OK;
-char ws2801_shortName[18] = { '\0' };
-char ws2801_longName[64] = { '\0' };
-
 uint16_t ws2801_port = CONF_WS2801_PORT;
-uint8_t ws2801_netConfig = NETCONFIG_DEFAULT;
 
 volatile unsigned char  ws2801_dmxUniverse[512];
-volatile uint16_t ws2801_artnetChannels = 0;
+volatile uint16_t ws2801_artnetChannels;
 uint8_t ws2801_pixels = CONF_WS2801_PIXELS;
 uint16_t ws2801_channels = CONF_WS2801_PIXELS*3;
 
 const char ws2801_ID[8] PROGMEM = "Art-Net";
-uint8_t ws2801_artnet_state = 0;
-
 const uint16_t pwmtable_8C[16] PROGMEM =
 {
-    0, 2, 3, 4, 6, 8, 11, 16, 23, 32, 45, 64, 90, 128, 181, 255
+    0, 2, 4, 6, 10, 14, 20, 28, 35, 45, 59, 76, 97, 128, 181, 255 
 };
 
-const uint16_t pwmtable_8D[32] PROGMEM =
+/*const uint16_t pwmtable_8C[16] PROGMEM =
 {
-    0, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23,
-    27, 32, 38, 45, 54, 64, 76, 91, 108, 128, 152, 181, 215, 255
-};
+    0, 2, 3, 4, 6, 8, 11, 16, 23, 32, 45, 64, 90, 128, 181, 255
+};*/
 
-volatile uint32_t ramp_up_timer;
-volatile uint32_t ramp_down_timer;
-volatile uint32_t onfor_timer;
-uint16_t ws2801_ramp_up_timer, ws2801_ramp_down_timer, ws2801_timer, ws2801_dim_steps;
-volatile uint8_t periodic_state = WS2801_STATE_IDLE;
-float dim_steps;
+volatile uint32_t ramp_up_timer = 0;
+volatile uint32_t ramp_down_timer = 0;
+volatile uint32_t onfor_timer = 0;
+volatile uint16_t ws2801_ramp_up_timer = 1;
+volatile uint16_t ws2801_ramp_down_timer = 1;
+volatile uint16_t ws2801_timer = 0;
+volatile uint16_t ws2801_dim_steps = 0;
+volatile int ws2801_state = 0;
+volatile int ws2801_artnet_state = 0;
+volatile int ws2801_dim_state = 15;
+volatile int ws2801_slow_dim_state = 0;
+volatile int ws2801_dim_direction = 0;
+volatile int periodic_state = WS2801_STATE_IDLE;
 
 uint16_t milli = 50;
+
+uint8_t ws2801_r, ws2801_g, ws2801_b;
+
+void ws2801_writebyte(unsigned char);
+void ws2801_showpixel(void);
+
+void hsv_to_rgb(double h, double s, double v, double *R, double *G, double *B);
+void rgb_to_hsv(double r, double g, double b, double *H, double *S, double *V);
 
 /* ----------------------------------------------------------------------------
  * initialization of network settings
@@ -106,18 +111,7 @@ ws2801_netInit(void)
 void
 ws2801_init(void)
 {
-
   WS2801_DEBUG("Init\n");
-  /* read Art-Net port */
-  ws2801_port = CONF_WS2801_PORT;
-  /* read netconfig */
-  ws2801_netConfig = NETCONFIG_DEFAULT;
-
-  /* read subnet */
-  ws2801_subNet = SUBNET_DEFAULT;
-  ws2801_artnet_universe = CONF_WS2801_UNIVERSE;
-  strcpy_P(ws2801_shortName, PSTR("e6ArtNode"));
-  strcpy_P(ws2801_longName, PSTR("e6ArtNode hostname: " CONF_HOSTNAME));
 
   /* net_init */
   ws2801_netInit();
@@ -126,30 +120,30 @@ ws2801_init(void)
   PIN_CLEAR(WS2801_CLOCK);
   PIN_CLEAR(WS2801_DATA);
 
+  /* set startcolor */
+  ws2801_colortemp_set(ws2801_colortemp);
+  ws2801_storage_write();
+  ws2801_clear();
+
 #ifdef WS2801_ARTNET_STARTUP
   /* enable artnet */
   ws2801_artnet_state = 1;
 #endif
 
-  /* set startcolor */
-  ws2801_dim_state = 15;
-  ws2801_colortemp = 6500;
-  ws2801_colortemp_set(ws2801_colortemp);
-  ws2801_storage_write();
-  ws2801_clear();
-
-  /* set standard timer */
-  ramp_up_timer = 0;
-  ramp_down_timer = 0;
-  onfor_timer = 0;
-  ws2801_ramp_up_timer = 2;
-  ws2801_ramp_down_timer = 2;
-
   WS2801_DEBUG("init complete\n");
   return;
 }
 
+uint8_t new=0;
 
+void
+ws2801_out(void)
+{
+  if (new == 1) {
+    ws2801_storage_show();  //storage ausgeben
+    new = 0;
+  }
+}
 
 /* ----------------------------------------------------------------------------
  * receive Art-Net packet
@@ -157,6 +151,7 @@ ws2801_init(void)
 void
 ws2801_get(void)
 {
+  if (new == 0) {
   struct ws2801_header *header;
 
   header = (struct ws2801_header *) uip_appdata;
@@ -183,7 +178,8 @@ ws2801_get(void)
       {
 	  ws2801_artnetChannels = (dmx->lengthHi << 8) | dmx->length;
           memcpy((unsigned char*)&ws2801_dmxUniverse[0], &(dmx->dataStart), ws2801_artnetChannels);
-	  ws2801_storage_show();  //storage ausgeben
+          new = 1;
+	  //ws2801_storage_show();  //storage ausgeben
       }
     }
       break;
@@ -194,6 +190,7 @@ ws2801_get(void)
       WS2801_DEBUG("Received an invalid ws2801 packet!\r\n");
       break;
   }
+ } //new empty?
 }
 
 void ws2801_color_set(uint8_t r, uint8_t g, uint8_t b)
@@ -380,15 +377,17 @@ rgb_to_hsv(double r, double g, double b, double *H, double *S, double *V)
 
     /* sort rgb into increasing order */
 
-    if (*rgb[0] > *rgb[1])
+    if (*rgb[0] > *rgb[1]) {
 	swap(rgb[0], rgb[1]);
-    if (*rgb[1] > *rgb[2])
-	if (*rgb[0] > *rgb[2])
+    }
+    if (*rgb[1] > *rgb[2]) {
+	if (*rgb[0] > *rgb[2]) {
 	    rshift(rgb[0], rgb[1], rgb[2]);
-	else
+	}else{
 	    swap(rgb[1], rgb[2]);
-
-    if (*V = *rgb[2])
+	}
+    }
+    if (*V = *rgb[2]) {
 	if (*S = 1 - *rgb[0] / *rgb[2]) {
 	    /* segment = 3*(b>g) + 2 * (rgb[1]==&b) + (rgb[1]==&r); */
 	    segment = 3 * (rgb[0]==&g||rgb[2]==&b)
@@ -400,6 +399,7 @@ rgb_to_hsv(double r, double g, double b, double *H, double *S, double *V)
 	    if (*H >= 1)
 		--*H;
 	}
+     }
 }
 
 //Datenausgabe------------------------------------------------------------------------------
@@ -449,6 +449,7 @@ void ws2801_showpixel(void) {
 
 void ws2801_state_set (uint8_t val) {
 	if (ws2801_artnet_state == 0) {
+             if (val != ws2801_state) {
 		ws2801_state = val;
 		if (ws2801_state == 0) {
 			//ws2801_clear();
@@ -467,6 +468,7 @@ void ws2801_state_set (uint8_t val) {
 			  ws2801_storage_show();
 			}
 		}
+             }
 	} else if (ws2801_artnet_state == 1) {
 		if (val == 0) {
 			ws2801_artnet_state = 0;
@@ -548,39 +550,39 @@ void ws2801_dim_updown (void) {
 	}	
 }
 
-void ws2801_dim_set (uint8_t dim) {
-	if ((dim >= 0)&&(dim<16)) {
+void ws2801_dim_set (int dim) {
+	if ((dim<16)&&(dim>0)) {
 		ws2801_dim_state = dim;
 	}
 }
 
-void ws2801_dim_ramp_up_set (uint16_t timer) {
-	if ((timer >= 0)&&(timer<16201)) {
-		ramp_up_timer = timer*milli;
+void ws2801_dim_ramp_up_set (int timer) {
+	if ((timer<16000)&&(timer>0)) {
+		ramp_up_timer = (uint16_t)timer*milli;
 	}
 }
 
-void ws2801_dim_ramp_up_timer_set (uint16_t timer) {
-	if ((timer >= 0)&&(timer<16201)) {
-		ws2801_ramp_up_timer = timer*milli;
+void ws2801_dim_ramp_up_timer_set (int timer) {
+	if ((timer<16000)&&(timer>0)) {
+		ws2801_ramp_up_timer = (uint16_t)timer*milli;
 	}
 }
 
-void ws2801_dim_ramp_down_set (uint16_t timer) {
-	if ((timer >= 0)&&(timer<16201)) {
-		ramp_down_timer = timer*milli;
+void ws2801_dim_ramp_down_set (int timer) {
+	if ((timer<16000)&&(timer>0)) {
+		ramp_down_timer = (uint16_t)timer*milli;
 	}
 }
 
-void ws2801_dim_ramp_down_timer_set (uint16_t timer) {
-	if ((timer >= 0)&&(timer<16201)) {
-		ws2801_ramp_down_timer = timer*milli;
+void ws2801_dim_ramp_down_timer_set (int timer) {
+	if ((timer<16000)&&(timer>0)) {
+		ws2801_ramp_down_timer = (uint16_t)timer*milli;
 	}
 }
 
-void ws2801_dim_onfor_timer_set (uint16_t timer) {
-	if ((timer >= 0)&&(timer<16201)) {
-		onfor_timer = timer*milli;
+void ws2801_dim_onfor_timer_set (int timer) {
+	if ((timer<16000)&&(timer>0)) {
+		onfor_timer = (uint16_t)timer*milli;
 	}
 }
 
@@ -591,15 +593,18 @@ ws2801_periodic(void)
   switch(periodic_state) {
     case WS2801_STATE_IDLE:
       if (ramp_up_timer > 0){
+        WS2801_DEBUG("ramp_up\r\n");
 	periodic_state = WS2801_STATE_RAMP_UP;
         ws2801_dim_steps = ramp_up_timer/(ws2801_dim_state - ws2801_slow_dim_state + 2);
       }
       if (ramp_down_timer > 0){
+        WS2801_DEBUG("ramp_down\r\n");
 	periodic_state = WS2801_STATE_RAMP_DOWN;
 	ws2801_slow_dim_state = ws2801_dim_state;
         ws2801_dim_steps = ramp_down_timer/(ws2801_slow_dim_state + 2);
       }
       if (onfor_timer > 0){
+        WS2801_DEBUG("on_for_timer\r\n");
 	periodic_state = WS2801_STATE_ONFORTIMER;
 	ws2801_state = 1;
 	ws2801_storage_write();
@@ -625,6 +630,7 @@ ws2801_periodic(void)
 
       /* reset state */
       periodic_state = WS2801_STATE_IDLE;
+      ws2801_state = 1;
       return;
 
     case WS2801_STATE_RAMP_DOWN:
@@ -636,15 +642,20 @@ ws2801_periodic(void)
 	  ws2801_timer = ws2801_dim_steps;
 	  ws2801_slow_dim_state--;
 	  }
-	}
 	  ws2801_storage_write_slowdim();
 	  ws2801_storage_show();
+	} else {
+          ws2801_clear();
+	}
+	  //ws2801_storage_write_slowdim();
+	  //ws2801_storage_show();
         ramp_down_timer--;
         return;
       }
 
       /* reset state */
       periodic_state = WS2801_STATE_IDLE;
+      ws2801_state = 0;
       return;
 
     case WS2801_STATE_ONFORTIMER:
@@ -662,6 +673,8 @@ ws2801_periodic(void)
     default:
       periodic_state = WS2801_STATE_IDLE;
   }
+ } else {
+     ws2801_out();
  }
 }
 
