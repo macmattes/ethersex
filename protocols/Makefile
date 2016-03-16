@@ -43,7 +43,10 @@ SUBSUBDIRS += protocols/udpcurtain
 SUBSUBDIRS += protocols/cw
 SUBSUBDIRS += protocols/sgc
 SUBSUBDIRS += protocols/sip
+SUBSUBDIRS += protocols/mq2
+SUBSUBDIRS += protocols/mq135
 SUBSUBDIRS += protocols/radio/ask
+SUBSUBDIRS += protocols/ws2801
 
 # generic fluff
 include $(TOPDIR)/scripts/rules.mk

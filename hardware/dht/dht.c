@@ -110,6 +110,7 @@ dht_start(dht_sensor_t *sensor)
 
   *(port-1) |= _BV(pin); /* OUTPUT */
   *(port-0) &= ~_BV(pin); /* LOW LEVEL */
+  _delay_ms(18);
 }
 
 static void
@@ -121,7 +122,7 @@ dht_read(dht_sensor_t *sensor)
   uint8_t pin  = sensor->pin;
 
   *(port-0) |= _BV(pin); /* HIGH LEVEL */
-  _delay_us(30);
+  _delay_us(40);
   *(port-1) &= ~_BV(pin); /* INPUT */
 
   /* Read in timingss, which takes approx. 4,5 milliseconds.
