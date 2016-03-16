@@ -2577,10 +2577,23 @@ CONF_ARTNET_PORT
 
   on which UDP port ethersex listens for artnet data
 
+Output IP
+CONF_ARTNET_OUTPUT_IP
+
+  the target for artnet data
+
+Send Poll Reply
+CONF_ARTNET_SEND_POLL_REPLY
+
+  When true, an acknowledge poll reply will be sent after
+  each data frame.
+  Set to false to reduce traffic.
+
 Art-Net Node
 ARTNET_SUPPORT
   Depends on:
    * DMX Storage (DMX_STORAGE_SUPPORT)
+   * UDP broadcast support (BROADCAST_SUPPORT)
    * UDP support (UDP_SUPPORT)
    * NET_MAX_FRAME_LENGTH > 571
 
@@ -2596,7 +2609,7 @@ HTTPLOG_BUFFER_LEN
 Backlight support
 HD44780_BACKLIGHT_SUPPORT
 
-  Backlight support for HD44780 LCD with direct connection.
+  Backlight support for LCDs based on the HD44780 controller.
 
 Tank level meter
 TANKLEVEL_SUPPORT
@@ -3391,4 +3404,42 @@ CONF_SCHEDULER_NUM_DYNAMIC_TIMERS
   Number of dynamic timers.
 
   Dynamic timers use a few byte RAM per timer.
+
+I2C MCP23017 16-bit port extension
+I2C_MCP23017_SUPPORT
+  Depends on: 
+   * I2C master (I2C_MASTER_SUPPORT)
+
+  Microchip MCP23017 16-bit I/O Expander support.
+
+  The MCP23017 is a very common and cheap I2C 16-bit I/O expander
+  available in various packages including PDIP.
+
+Invert Backlight switch
+HD44780_BACKLIGHT_INV
+  Depends on: 
+   * HD44780 module driver (Character-LCD) (HD44780_SUPPORT)
+   * Backlight support (HD44780_BACKLIGHT_SUPPORT)
+
+  Backlight is low active. Currently this is implemented for I2C connected HD44780 LCDs only.
+
+Multiple ENABLE support
+HD44780_MULTIENSUPPORT
+  Depends on: 
+   * HD44780 module driver (Character-LCD) (HD44780_SUPPORT)
+
+  Some displays with multiple lines are based on more than one HD44780 controller. 
+  One example is the WDC2704M module with four lines a 27 characters.
+  To display text  on the display's e.G. third line the command needs to be sent to the second controller.
+  Not to double the data lines the different controller can be selected by EN lines.
+  This option takes care of selecting the controller according to the line number.
+
+
+HD44780_I2C
+DEBUG_HD44780_I2C
+  Depends on: 
+   * Enable Debugging (DEBUG)
+   *  (HD44780_I2CSUPPORT)
+
+  This logs the commands send to and read from to LCD via I2C
 
